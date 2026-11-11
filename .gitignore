@@ -1,0 +1,86 @@
+### Python ###
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+### Virtual environments ###
+.venv/
+venv/
+env/
+ENV/
+.uv/
+
+### Packaging / build ###
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+
+### Environment / secrets ###
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+### Databases ###
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+### Testing / coverage ###
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+
+### Linters / type checkers ###
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+.pyre/
+.cache/
+
+### Logs ###
+*.log
+logs/
+
+### Tooling / editors ###
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+
+### OS ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+### Local docker / data ###
+docker-compose.override.yml
+.postgres-data/
+data/
+
+### Frontend (если появится) ###
+node_modules/
+.next/
+.nuxt/
+*.local
+
+### mise (локальные настройки) ###
+mise.local.toml
+mise.*.local.toml

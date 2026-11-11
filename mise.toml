@@ -1,0 +1,105 @@
+# mise-en-place: https://mise.jdx.dev
+# Управляет версиями инструментов, окружением и задачами проекта.
+
+min_version = "2026.11.0"
+
+[tools]
+python = "3.13"
+node = "22"
+uv = "latest"
+
+[env]
+# Локальные .env подхватываются, если файлы существуют.
+# backend/.env читает и сам pydantic-settings, здесь он нужен для mise exec/задач.
+_.file = ["backend/.env", "frontend/.env.local"]
+
+# --- Установка зависимостей ---
+
+[tasks.setup]
+description = "Установить зависимости backend и frontend"
+run = [
+  { task = "backend:install" },
+  { task = "frontend:install" },
+]
+
+[tasks."backend:install"]
+description = "Синхронизировать Python-зависимости (uv sync)"
+dir = "backend"
+run = "uv sync"
+
+[tasks."frontend:install"]
+description = "Установить npm-зависимости"
+dir = "frontend"
+run = "npm install"
+
+[tasks."setup:ci"]
+description = "Установка зависимостей по lock-файлам (CI)"
+run = [
+  { task = "backend:install" },
+  { task = "frontend:ci" },
+]
+
+[tasks."frontend:ci"]
+description = "npm ci по package-lock.json"
+dir = "frontend"
+hide = true
+run = "npm ci"
+
+# --- Разработка ---
+
+[tasks.dev]
+description = "Запустить backend и frontend одновременно"
+depends = ["backend:dev", "frontend:dev"]
+
+[tasks."backend:dev"]
+description = "FastAPI с автоперезагрузкой"
+dir = "backend"
+run = "uv run fastapi dev app/main.py"
+
+[tasks."frontend:dev"]
+description = "Vite dev-сервер"
+dir = "frontend"
+run = "npm run dev"
+
+# --- Проверки ---
+
+[tasks.check]
+description = "Линтеры, типы, тесты и сборка"
+depends = ["backend:lint", "backend:test", "frontend:lint", "frontend:build"]
+
+[tasks."backend:lint"]
+description = "ruff + mypy для backend"
+dir = "backend"
+tags = ["lint"]
+run = [
+  "uv run ruff check .",
+  "uv run ruff format --check .",
+  "uv run mypy app tests",
+]
+
+[tasks."backend:format"]
+description = "Форматирование backend (ruff)"
+dir = "backend"
+tags = ["format"]
+run = [
+  "uv run ruff check --fix .",
+  "uv run ruff format .",
+]
+
+[tasks."backend:test"]
+description = "pytest для backend"
+dir = "backend"
+tags = ["test"]
+run = "uv run pytest"
+
+[tasks."frontend:lint"]
+description = "oxlint для frontend"
+dir = "frontend"
+tags = ["lint"]
+run = "npm run lint"
+
+[tasks."frontend:build"]
+description = "Сборка frontend (tsc + vite build)"
+dir = "frontend"
+tags = ["build"]
+run = "npm run build"

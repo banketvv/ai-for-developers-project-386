@@ -3,7 +3,7 @@
 ## Repo map
 
 - `backend/` — FastAPI. ASGI entrypoint is `app.main:app`; `GET /health` is the only endpoint so far. No events/slots/bookings API yet.
-- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Still the Vite starter screen; no router, pages, or API client yet.
+- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, shared header, stub routes `/booking` and `/bookings`; no API client yet.
 - `mise.toml` at the root — tool versions and all dev tasks. Local workflow and CI both go through mise.
 - `backend/README.md` — backend setup and conventions. Root `README.md` is the Hexlet project template.
 
@@ -22,10 +22,11 @@ mise tasks ls
 ```
 
 - Backend only: `mise run backend:dev`, `backend:lint`, `backend:test`.
-- Frontend only: `mise run frontend:dev`, `frontend:lint`, `frontend:build`.
+- Frontend only: `mise run frontend:dev`, `frontend:lint`, `frontend:test`, `frontend:build`.
+- Frontend tests in watch mode: `mise run frontend:test:watch`.
 - Single backend test: `cd backend && uv run pytest tests/test_health.py -k health`.
-- There is no frontend test runner. `npm run lint` is **oxlint**, not ESLint. `npm run build` (`tsc -b && vite build`) is the only TypeScript typecheck — run it after TS changes.
-- `mise run check` runs its four tasks in parallel; one failure does not stop the others, but the run exits non-zero.
+- Frontend tests are Vitest + Testing Library on jsdom, colocated as `*.test.tsx`. `npm run lint` is **oxlint**, not ESLint. `npm run build` (`tsc -b && vite build`) is the only TypeScript typecheck — run it after TS changes.
+- `mise run check` runs its five tasks in parallel; one failure does not stop the others, but the run exits non-zero.
 
 ## Non-obvious constraints
 

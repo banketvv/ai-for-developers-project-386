@@ -65,7 +65,7 @@ run = "npm run dev"
 
 [tasks.check]
 description = "Линтеры, типы, тесты и сборка"
-depends = ["backend:lint", "backend:test", "frontend:lint", "frontend:build"]
+depends = ["backend:lint", "backend:test", "frontend:lint", "frontend:test", "frontend:build"]
 
 [tasks."backend:lint"]
 description = "ruff + mypy для backend"
@@ -97,6 +97,17 @@ description = "oxlint для frontend"
 dir = "frontend"
 tags = ["lint"]
 run = "npm run lint"
+
+[tasks."frontend:test"]
+description = "Тесты frontend (vitest, один прогон)"
+dir = "frontend"
+tags = ["test"]
+run = "npm run test"
+
+[tasks."frontend:test:watch"]
+description = "Тесты frontend в режиме наблюдения"
+dir = "frontend"
+run = "npm run test:watch"
 
 [tasks."frontend:build"]
 description = "Сборка frontend (tsc + vite build)"

@@ -54,3 +54,17 @@ origin/main`, never `git merge`. The one exception is `implement-spec`, whose ow
   merges it makes between its implementer branches and its integration branch are allowed, and so
   is bringing `main` in before it marks the pull request ready (below). The squash of that pull
   request keeps `main` linear.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for `banketvv/ai-for-developers-project-386`, driven by the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default triage roles, each label string equal to its name. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

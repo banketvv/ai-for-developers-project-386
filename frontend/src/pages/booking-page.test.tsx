@@ -169,6 +169,39 @@ describe('BookingPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('показывает владельцу ссылку на правку типа', async () => {
+    server.use(
+      http.get(sessionUrl, ownerSession),
+      http.get(meetingTypesUrl, () =>
+        HttpResponse.json([meetingType({ id: 5, title: 'Разбор' })]),
+      ),
+    )
+
+    renderApp(['/booking'])
+
+    const edit = await screen.findByRole('link', {
+      name: 'Изменить Разбор',
+    })
+    expect(edit).toHaveAttribute('href', '/owner/types/5/edit')
+  })
+
+  it('не показывает гостю ссылку на правку типа', async () => {
+    server.use(
+      http.get(meetingTypesUrl, () =>
+        HttpResponse.json([meetingType({ id: 5, title: 'Разбор' })]),
+      ),
+    )
+
+    renderApp(['/booking'])
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Разбор' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Изменить Разбор' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('отличает пустой список от ошибки загрузки и повторяет запрос', async () => {
     const user = userEvent.setup()
     let attempts = 0

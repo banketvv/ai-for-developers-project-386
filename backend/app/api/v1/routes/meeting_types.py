@@ -1,10 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from app.api.deps import NowDep, OwnerDep, SessionDep, SettingsDep
-from app.schemas.meeting_type import MeetingTypeCreate, MeetingTypeRead
+from app.schemas.meeting_type import MeetingTypeCreate, MeetingTypeRead, MeetingTypeUpdate
 from app.services.meeting_types import create_meeting_type as create_meeting_type_service
+from app.services.meeting_types import delete_meeting_type as delete_meeting_type_service
 from app.services.meeting_types import get_meeting_type as get_meeting_type_service
 from app.services.meeting_types import list_meeting_types
+from app.services.meeting_types import update_meeting_type as update_meeting_type_service
 
 router = APIRouter(prefix="/api/v1/meeting-types", tags=["meeting-types"])
 
@@ -50,3 +52,33 @@ async def read_meeting_type(
         now=now,
         timezone=settings.owner_timezone,
     )
+
+
+@router.patch("/{meeting_type_id}", response_model=MeetingTypeRead)
+async def update_meeting_type(
+    meeting_type_id: int,
+    payload: MeetingTypeUpdate,
+    session: SessionDep,
+    owner: OwnerDep,
+    settings: SettingsDep,
+    now: NowDep,
+) -> MeetingTypeRead:
+    """Правит тип встречи: доступно только владельцу, запертая длительность — 409."""
+    return await update_meeting_type_service(
+        session,
+        meeting_type_id,
+        payload=payload,
+        now=now,
+        timezone=settings.owner_timezone,
+    )
+
+
+@router.delete("/{meeting_type_id}", status_code=204)
+async def delete_meeting_type(
+    meeting_type_id: int,
+    session: SessionDep,
+    owner: OwnerDep,
+) -> Response:
+    """Удаляет тип встречи вместе с бронями: доступно только владельцу."""
+    await delete_meeting_type_service(session, meeting_type_id)
+    return Response(status_code=204)

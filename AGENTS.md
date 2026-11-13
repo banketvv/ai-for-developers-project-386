@@ -2,8 +2,8 @@
 
 ## Repo map
 
-- `backend/` — FastAPI. ASGI entrypoint is `app.main:app`. Endpoints: `GET /health`, `/api/v1/session`, `/api/v1/meeting-types` (list, create, detail), `/api/v1/meeting-types/{id}/slots`, `/api/v1/bookings` (list, create) and `/api/v1/bookings/{id}` (detail). Both tables (`meeting_types`, `bookings`) exist and are created by Alembic.
-- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, meeting-type list at `/booking`, type calendar at `/booking/{meetingTypeId}`, booking form at `/booking/{meetingTypeId}/{start}`, upcoming bookings at `/bookings`, booking confirmation at `/bookings/{bookingId}`, owner login at `/owner`, type creation form at `/owner/types/new`. API client in `src/lib/api.ts`, display formatting in `src/lib/datetime.ts`, network in tests is intercepted by MSW.
+- `backend/` — FastAPI. ASGI entrypoint is `app.main:app`. Endpoints: `GET /health`, `/api/v1/session`, `/api/v1/meeting-types` (list, create, detail, update, delete), `/api/v1/meeting-types/{id}/slots`, `/api/v1/bookings` (list, create) and `/api/v1/bookings/{id}` (detail). Both tables (`meeting_types`, `bookings`) exist and are created by Alembic.
+- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, meeting-type list at `/booking`, type calendar at `/booking/{meetingTypeId}`, booking form at `/booking/{meetingTypeId}/{start}`, upcoming bookings at `/bookings`, booking confirmation at `/bookings/{bookingId}`, owner login at `/owner`, type creation form at `/owner/types/new`, type edit form at `/owner/types/{meetingTypeId}/edit`. API client in `src/lib/api.ts`, display formatting in `src/lib/datetime.ts`, network in tests is intercepted by MSW.
 - `mise.toml` at the root — tool versions and all dev tasks. Local workflow and CI both go through mise.
 - `backend/README.md` — backend setup and conventions. Root `README.md` is the Hexlet project template.
 

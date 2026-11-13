@@ -16,6 +16,12 @@ export type MeetingTypeCreate = {
   duration_minutes: number
 }
 
+export type MeetingTypeUpdate = {
+  title?: string
+  description?: string | null
+  duration_minutes?: number
+}
+
 const MEETING_TYPES_PATH = '/api/v1/meeting-types'
 
 export function listMeetingTypes(): Promise<MeetingTypeRead[]> {
@@ -32,6 +38,25 @@ export function createMeetingType(
   return apiRequest<MeetingTypeRead>(MEETING_TYPES_PATH, {
     method: 'POST',
     body: input,
+  })
+}
+
+export function updateMeetingType(
+  meetingTypeId: number,
+  input: MeetingTypeUpdate,
+): Promise<MeetingTypeRead> {
+  return apiRequest<MeetingTypeRead>(
+    `${MEETING_TYPES_PATH}/${meetingTypeId}`,
+    {
+      method: 'PATCH',
+      body: input,
+    },
+  )
+}
+
+export function deleteMeetingType(meetingTypeId: number): Promise<null> {
+  return apiRequest<null>(`${MEETING_TYPES_PATH}/${meetingTypeId}`, {
+    method: 'DELETE',
   })
 }
 

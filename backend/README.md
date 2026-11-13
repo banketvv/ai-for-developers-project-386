@@ -102,11 +102,12 @@ Cookie `HttpOnly`, `SameSite=Lax`, срок 30 дней, `Secure` вне `local`
   "duration_minutes": 30,
   "created_at": "2026-11-16T09:00:00",
   "bookings_count": 3,
-  "has_available_slots": true
+  "has_available_slots": true,
+  "duration_locked": true
 }
 ```
 
-`POST`, `PATCH` и `DELETE` доступны только владельцу, гостю — `403 forbidden`. `PATCH` принимает любое подмножество полей создания: название после обрезки 1–100 символов, описание до 1000 (пустое — без описания), длительность 15/30/45/60; ошибки полей — `422 validation_error`. Правка длительности запрещена, пока у типа есть предстоящие брони: `409 duration_locked`; название и описание правятся всегда. `DELETE` отвечает `204` и каскадно удаляет брони типа, неизвестный тип — `404 not_found`.
+`bookings_count` считает все брони типа — это число показывает предупреждение об удалении. `duration_locked` считает сервер по предстоящим броням: пока они есть, длительность заперта, и интерфейс выключает поле. Правка длительности запрещена, пока у типа есть предстоящие брони: `409 duration_locked`; название и описание правятся всегда. Без предстоящих броней, даже если прошедшие остались, `duration_locked` равен `false` и длительность меняется. `POST`, `PATCH` и `DELETE` доступны только владельцу, гостю — `403 forbidden`. `PATCH` принимает любое подмножество полей создания: название после обрезки 1–100 символов, описание до 1000 (пустое — без описания), длительность 15/30/45/60; ошибки полей — `422 validation_error`. `DELETE` отвечает `204` и каскадно удаляет брони типа, неизвестный тип — `404 not_found`.
 
 ## Слоты
 
@@ -154,6 +155,7 @@ backend/
 ├── app/
 │   ├── main.py              # create_app(), CORS, lifespan, обработчики ошибок
 │   ├── api/
+│   │   ├── cookies.py       # установка и очистка cookie сессии
 │   │   ├── deps.py          # зависимости: сессия БД, смотрящий, владелец, часы
 │   │   └── v1/
 │   │       └── routes/
@@ -165,18 +167,20 @@ backend/
 │   ├── core/
 │   │   ├── clock.py         # текущий момент и зависимость get_now
 │   │   ├── config.py        # Settings из env/.env
-│   │   └── errors.py        # AppError и единый конверт ошибок
+│   │   └── errors.py        # AppError, not_found() и единый конверт ошибок
 │   ├── db/
 │   │   ├── base.py          # DeclarativeBase и naming_convention
 │   │   ├── models/          # MeetingType, Booking
 │   │   └── session.py       # async engine, SessionFactory, get_session
-│   ├── schemas/             # Pydantic-схемы API
+│   ├── schemas/             # Pydantic-схемы API и общий сериализатор моментов
 │   └── services/            # правила домена: сессия, типы встреч, слоты, брони
 ├── migrations/              # Alembic: env.py и ревизии
 └── tests/
     ├── conftest.py          # приложение с подменёнными настройками, часами и БД
+    ├── support.py           # общие помощники: вход владельца, создание типа
     ├── test_bookings.py
     ├── test_health.py
+    ├── test_meeting_type_edit.py
     ├── test_meeting_types.py
     ├── test_migrations.py
     ├── test_session.py

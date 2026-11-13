@@ -101,10 +101,11 @@ backend/
 ├── app/
 │   ├── main.py              # create_app(), CORS, lifespan, обработчики ошибок
 │   ├── api/
-│   │   ├── deps.py          # зависимости: смотрящий, настройки
+│   │   ├── deps.py          # зависимости: сессия БД, смотрящий, владелец, часы
 │   │   └── v1/
 │   │       └── routes/
 │   │           ├── health.py
+│   │           ├── meeting_types.py
 │   │           └── session.py
 │   ├── core/
 │   │   ├── clock.py         # текущий момент и зависимость get_now
@@ -112,12 +113,16 @@ backend/
 │   │   └── errors.py        # AppError и единый конверт ошибок
 │   ├── db/
 │   │   ├── base.py          # DeclarativeBase и naming_convention
+│   │   ├── models/          # MeetingType, Booking
 │   │   └── session.py       # async engine, SessionFactory, get_session
 │   ├── schemas/             # Pydantic-схемы API
-│   └── services/            # правила домена (сессия)
+│   └── services/            # правила домена: сессия, типы встреч, слоты
+├── migrations/              # Alembic: env.py и ревизии
 └── tests/
-    ├── conftest.py          # приложение с подменёнными настройками и часами
+    ├── conftest.py          # приложение с подменёнными настройками, часами и БД
     ├── test_health.py
+    ├── test_meeting_types.py
+    ├── test_migrations.py
     └── test_session.py
 ```
 
@@ -138,7 +143,16 @@ backend/
 - `PRAGMA foreign_keys=ON` — внешние ключи в SQLite по умолчанию выключены;
 - `PRAGMA journal_mode=WAL` — параллельные чтения во время записи.
 
-Alembic добавлен в зависимости; каталог миграций появится вместе с первыми моделями. Для SQLite миграции настраиваются с `render_as_batch=True`, так как SQLite не поддерживает большинство `ALTER TABLE`.
+Схема живёт в миграциях Alembic (`migrations/`, `render_as_batch=True` для SQLite). Адрес БД берётся из `DATABASE_URL`, если он не задан программно:
+
+```bash
+mise run backend:migrate           # создать или обновить схему
+uv run alembic revision -m "..."   # новая ревизия
+```
+
+`mise run backend:dev` применяет миграции перед запуском сервера.
+
+В таблицах `meeting_types` и `bookings` длительности ограничены `CHECK`-ограничением, а пара «тип встречи + начало слота» уникальна; удаление типа каскадно удаляет его брони.
 
 ## Тесты
 
@@ -170,10 +184,11 @@ uv run mypy app tests
 - конфигурация через `.env`;
 - слой БД (async engine и сессии SQLite);
 - `GET /health` и тест на него;
-- опознание смотрящего по cookie: вход владельца и смена почты (`/api/v1/session`).
+- опознание смотрящего по cookie: вход владельца и смена почты (`/api/v1/session`);
+- модели `MeetingType` и `Booking`, первая миграция Alembic;
+- список, создание и карточка типа встречи (`/api/v1/meeting-types`), создание — только владельцу.
 
 В планах:
 
-- модели `MeetingType` и `Booking` и миграции Alembic;
-- API `/api/v1/meeting-types`, `/api/v1/meeting-types/{id}/slots`, `/api/v1/bookings`;
-- защита от двойного бронирования слота (уникальный индекс + `409 Conflict`).
+- API слотов (`/api/v1/meeting-types/{id}/slots`);
+- API броней `/api/v1/bookings` и защита от двойного бронирования (`409 Conflict`).

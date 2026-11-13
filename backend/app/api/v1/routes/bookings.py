@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Response
 
+from app.api.cookies import set_session_cookie
 from app.api.deps import NowDep, SessionDep, SettingsDep, ViewerDep
 from app.schemas.booking import BookingCreate, BookingRead
 from app.services.bookings import create_booking as create_booking_service
 from app.services.bookings import get_booking as get_booking_service
 from app.services.bookings import list_bookings as list_bookings_service
-from app.services.session import set_session_cookie
 
 router = APIRouter(prefix="/api/v1/bookings", tags=["bookings"])
 

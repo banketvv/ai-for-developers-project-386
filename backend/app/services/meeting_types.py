@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import AppError
+from app.core.errors import AppError, not_found
 from app.db.models import Booking, MeetingType
 from app.schemas.meeting_type import MeetingTypeCreate, MeetingTypeRead, MeetingTypeUpdate
 from app.schemas.slot import SlotRead, SlotsRead
@@ -33,6 +33,7 @@ def to_read(
     *,
     bookings_count: int,
     has_available_slots: bool,
+    duration_locked: bool,
 ) -> MeetingTypeRead:
     """Собирает ответ по типу встречи и вычисленным полям."""
     return MeetingTypeRead(
@@ -43,7 +44,16 @@ def to_read(
         created_at=meeting_type.created_at,
         bookings_count=bookings_count,
         has_available_slots=has_available_slots,
+        duration_locked=duration_locked,
     )
+
+
+async def type_ids_with_upcoming_bookings(session: AsyncSession, now: datetime) -> set[int]:
+    """Типы с предстоящими бронями: у них длительность заперта — одним запросом."""
+    rows = await session.execute(
+        select(Booking.meeting_type_id).where(Booking.start > now).distinct()
+    )
+    return set(rows.scalars())
 
 
 async def list_meeting_types(
@@ -65,6 +75,7 @@ async def list_meeting_types(
         )
     )
     busy = await upcoming_intervals(session, now)
+    locked = await type_ids_with_upcoming_bookings(session, now)
     return [
         to_read(
             meeting_type,
@@ -75,6 +86,7 @@ async def list_meeting_types(
                 timezone=timezone,
                 busy=busy,
             ),
+            duration_locked=meeting_type.id in locked,
         )
         for meeting_type, count in rows.all()
     ]
@@ -107,12 +119,13 @@ async def create_meeting_type(
             timezone=timezone,
             busy=busy,
         ),
+        duration_locked=False,
     )
 
 
-def _not_found() -> AppError:
+def _meeting_type_not_found() -> AppError:
     """Неизвестный тип встречи: один и тот же ответ на любой запрос."""
-    return AppError(code="not_found", message="Тип встречи не найден", status_code=404)
+    return not_found("Тип встречи не найден")
 
 
 async def _read_with_computed(
@@ -122,7 +135,7 @@ async def _read_with_computed(
     now: datetime,
     timezone: str,
 ) -> MeetingTypeRead:
-    """Считает число броней и наличие слотов для сохранённого типа."""
+    """Считает число броней, наличие слотов и блокировку длительности."""
     bookings_count = await session.scalar(
         select(func.count(Booking.id)).where(Booking.meeting_type_id == meeting_type.id)
     )
@@ -136,6 +149,7 @@ async def _read_with_computed(
             timezone=timezone,
             busy=busy,
         ),
+        duration_locked=await has_upcoming_bookings(session, meeting_type.id, now=now),
     )
 
 
@@ -167,7 +181,7 @@ async def get_meeting_type(
     """Показывает один тип встречи или отвечает 404, если его нет."""
     meeting_type = await session.get(MeetingType, meeting_type_id)
     if meeting_type is None:
-        raise _not_found()
+        raise _meeting_type_not_found()
     return await _read_with_computed(session, meeting_type, now=now, timezone=timezone)
 
 
@@ -182,7 +196,7 @@ async def update_meeting_type(
     """Правит тип встречи: название и описание всегда, длительность — без броней."""
     meeting_type = await session.get(MeetingType, meeting_type_id)
     if meeting_type is None:
-        raise _not_found()
+        raise _meeting_type_not_found()
     provided = payload.model_fields_set
     if (
         "duration_minutes" in provided
@@ -209,7 +223,7 @@ async def delete_meeting_type(session: AsyncSession, meeting_type_id: int) -> No
     """Удаляет тип встречи вместе с его бронями: каскад обеспечивает БД."""
     meeting_type = await session.get(MeetingType, meeting_type_id)
     if meeting_type is None:
-        raise _not_found()
+        raise _meeting_type_not_found()
     await session.delete(meeting_type)
     await session.commit()
 
@@ -224,7 +238,7 @@ async def list_slots(
     """Все слоты окна типа встречи: занятые входят с признаком недоступности."""
     meeting_type = await session.get(MeetingType, meeting_type_id)
     if meeting_type is None:
-        raise AppError(code="not_found", message="Тип встречи не найден", status_code=404)
+        raise _meeting_type_not_found()
     busy = await upcoming_intervals(session, now)
     return SlotsRead(
         slots=[

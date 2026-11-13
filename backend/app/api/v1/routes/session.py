@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Response
 
+from app.api.cookies import clear_session_cookie, set_session_cookie
 from app.api.deps import SettingsDep, ViewerDep
 from app.core.errors import AppError
 from app.schemas.session import SessionLogin, SessionRead
-from app.services.session import (
-    clear_session_cookie,
-    normalize_email,
-    set_session_cookie,
-)
+from app.services.session import is_owner_email, normalize_email
 
 router = APIRouter(prefix="/api/v1/session", tags=["session"])
 
@@ -26,7 +23,7 @@ def read_session(viewer: ViewerDep, settings: SettingsDep) -> SessionRead:
 def log_in(payload: SessionLogin, response: Response, settings: SettingsDep) -> None:
     """Вход владельца: узнаёт его по почте и ставит cookie."""
     email = normalize_email(payload.email)
-    if email != normalize_email(settings.owner_email):
+    if not is_owner_email(email, settings):
         raise AppError(
             code="forbidden",
             message="Этот email не принадлежит владельцу",

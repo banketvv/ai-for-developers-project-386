@@ -9,27 +9,11 @@ from app.core.clock import get_now
 from app.core.config import Settings, get_settings
 from app.db.models import Booking
 from app.services.slots import day_slot_starts
+from tests.support import create_meeting_type
 
 # Окно фиксированного момента — «16 ноября + 13 дней»:
 # будни 16–20 и 23–27 ноября 2026.
 WINDOW_WORKDAY_DATES = {16, 17, 18, 19, 20, 23, 24, 25, 26, 27}
-
-
-def create_meeting_type(
-    client: TestClient,
-    settings: Settings,
-    *,
-    title: str,
-    duration_minutes: int,
-) -> dict[str, object]:
-    """Заводит тип встречи от имени владельца: слоты считаются от его длительности."""
-    client.post("/api/v1/session", json={"email": settings.owner_email})
-    response = client.post(
-        "/api/v1/meeting-types",
-        json={"title": title, "duration_minutes": duration_minutes},
-    )
-    assert response.status_code == 201
-    return response.json()
 
 
 def test_slots_cover_the_whole_window_in_utc(client: TestClient, settings: Settings) -> None:
@@ -82,13 +66,6 @@ def test_busy_slots_are_returned_as_unavailable_for_every_type(
     assert half_hour_by_start["2026-11-16T11:00:00Z"] is False
     assert half_hour_by_start["2026-11-16T11:30:00Z"] is False
     assert half_hour_by_start["2026-11-16T12:00:00Z"] is True
-
-
-def test_unknown_meeting_type_has_no_slots(client: TestClient) -> None:
-    response = client.get("/api/v1/meeting-types/999/slots")
-
-    assert response.status_code == 404
-    assert response.json()["error"]["code"] == "not_found"
 
 
 @pytest.mark.parametrize(

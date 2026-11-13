@@ -6,7 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiError } from '@/lib/api'
 import { createMeetingType } from '@/lib/meeting-types'
-import { LOAD_ERROR, RETRY_LABEL, SUBMIT_ERROR } from '@/lib/messages'
+import {
+  LOAD_ERROR,
+  LOGIN_AGAIN_LABEL,
+  OWNER_SESSION_INVALID,
+  RETRY_LABEL,
+  SUBMIT_ERROR,
+} from '@/lib/messages'
 import { useSession } from '@/lib/session'
 
 const DURATIONS = [15, 30, 45, 60] as const
@@ -19,7 +25,7 @@ type FieldErrors = {
 }
 
 function MeetingTypeFormPage() {
-  const { status: sessionStatus, isOwner, reload } = useSession()
+  const { status: sessionStatus, email, isOwner, reload } = useSession()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -109,10 +115,14 @@ function MeetingTypeFormPage() {
         </h1>
         <div className="mt-6 max-w-sm space-y-3">
           <p role="alert" className="text-sm text-destructive">
-            Создавать типы встреч может только владелец.
+            {email
+              ? OWNER_SESSION_INVALID
+              : 'Создавать типы встреч может только владелец.'}
           </p>
           <Button asChild variant="outline">
-            <Link to="/owner">Войти как владелец</Link>
+            <Link to="/owner">
+              {email ? LOGIN_AGAIN_LABEL : 'Войти как владелец'}
+            </Link>
           </Button>
         </div>
       </section>

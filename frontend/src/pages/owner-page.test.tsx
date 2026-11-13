@@ -143,6 +143,32 @@ describe('OwnerPage', () => {
     expect(screen.queryByText(/Вы вошли как владелец/)).not.toBeInTheDocument()
   })
 
+  it('сообщает о сбое смены email и оставляет сессию владельца', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get(sessionUrl, ownerSession),
+      http.delete(sessionUrl, () =>
+        HttpResponse.json(
+          { error: { code: 'internal_error', message: 'Сломалось' } },
+          { status: 500 },
+        ),
+      ),
+    )
+    renderApp(['/owner'])
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Сменить email' }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Не удалось отправить, попробуйте ещё раз',
+    )
+    expect(screen.getByText(/Вы вошли как владелец/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Сменить email' }),
+    ).toBeEnabled()
+  })
+
   it('показывает ошибку загрузки на месте формы и повторяет запрос', async () => {
     const user = userEvent.setup()
     let attempts = 0

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,23 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.db.models import Booking
-
-
-def owner_session(client: TestClient, settings: Settings) -> None:
-    """Входит владельцем: cookie с его почтой."""
-    client.post("/api/v1/session", json={"email": settings.owner_email})
-
-
-def create_type(
-    client: TestClient,
-    settings: Settings,
-    **payload: object,
-) -> dict[str, Any]:
-    """Заводит тип встречи от имени владельца и возвращает ответ."""
-    owner_session(client, settings)
-    response = client.post("/api/v1/meeting-types", json=payload)
-    assert response.status_code == 201
-    return response.json()
+from tests.support import create_meeting_type, owner_session
 
 
 def add_booking(
@@ -54,7 +37,7 @@ def upcoming_start(now: datetime) -> datetime:
 
 
 def test_owner_updates_title_and_description(client: TestClient, settings: Settings) -> None:
-    created = create_type(
+    created = create_meeting_type(
         client,
         settings,
         title="Старое название",
@@ -77,7 +60,7 @@ def test_owner_updates_title_and_description(client: TestClient, settings: Setti
 
 
 def test_blank_description_clears_it(client: TestClient, settings: Settings) -> None:
-    created = create_type(client, settings, title="С описанием", description="Текст")
+    created = create_meeting_type(client, settings, title="С описанием", description="Текст")
 
     response = client.patch(
         f"/api/v1/meeting-types/{created['id']}",
@@ -91,7 +74,7 @@ def test_blank_description_clears_it(client: TestClient, settings: Settings) -> 
 def test_duration_changes_without_bookings_and_applies_to_slots(
     client: TestClient, settings: Settings
 ) -> None:
-    created = create_type(client, settings, title="Короткая", duration_minutes=15)
+    created = create_meeting_type(client, settings, title="Короткая", duration_minutes=15)
 
     response = client.patch(
         f"/api/v1/meeting-types/{created['id']}",
@@ -109,7 +92,7 @@ def test_duration_changes_without_bookings_and_applies_to_slots(
 def test_duration_is_locked_while_upcoming_booking_exists(
     client: TestClient, settings: Settings, db: Session, now: datetime
 ) -> None:
-    created = create_type(client, settings, title="Занятая", duration_minutes=30)
+    created = create_meeting_type(client, settings, title="Занятая", duration_minutes=30)
     add_booking(db, int(created["id"]), start=upcoming_start(now), now=now)
 
     response = client.patch(
@@ -119,13 +102,16 @@ def test_duration_is_locked_while_upcoming_booking_exists(
 
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "duration_locked"
-    assert client.get(f"/api/v1/meeting-types/{created['id']}").json()["duration_minutes"] == 30
+    detail = client.get(f"/api/v1/meeting-types/{created['id']}").json()
+    assert detail["duration_minutes"] == 30
+    # Признак блокировки считает сервер: клиент не выводит его из общего числа броней.
+    assert detail["duration_locked"] is True
 
 
 def test_title_and_description_stay_editable_with_upcoming_bookings(
     client: TestClient, settings: Settings, db: Session, now: datetime
 ) -> None:
-    created = create_type(client, settings, title="Старое", duration_minutes=30)
+    created = create_meeting_type(client, settings, title="Старое", duration_minutes=30)
     add_booking(db, int(created["id"]), start=upcoming_start(now), now=now)
 
     response = client.patch(
@@ -143,7 +129,7 @@ def test_title_and_description_stay_editable_with_upcoming_bookings(
 def test_duration_kept_the_same_is_not_locked(
     client: TestClient, settings: Settings, db: Session, now: datetime
 ) -> None:
-    created = create_type(client, settings, title="Занятая", duration_minutes=30)
+    created = create_meeting_type(client, settings, title="Занятая", duration_minutes=30)
     add_booking(db, int(created["id"]), start=upcoming_start(now), now=now)
 
     response = client.patch(
@@ -158,7 +144,7 @@ def test_duration_kept_the_same_is_not_locked(
 def test_past_bookings_do_not_lock_duration(
     client: TestClient, settings: Settings, db: Session, now: datetime
 ) -> None:
-    created = create_type(client, settings, title="Прошедшая", duration_minutes=30)
+    created = create_meeting_type(client, settings, title="Прошедшая", duration_minutes=30)
     add_booking(db, int(created["id"]), start=now - timedelta(days=1), now=now)
 
     response = client.patch(
@@ -168,6 +154,12 @@ def test_past_bookings_do_not_lock_duration(
 
     assert response.status_code == 200
     assert response.json()["duration_minutes"] == 45
+    assert response.json()["duration_locked"] is False
+    detail = client.get(f"/api/v1/meeting-types/{created['id']}").json()
+    assert detail["duration_minutes"] == 45
+    assert detail["duration_locked"] is False
+    # Общее число броней остаётся для предупреждения об удалении.
+    assert detail["bookings_count"] == 1
 
 
 @pytest.mark.parametrize(
@@ -186,7 +178,7 @@ def test_invalid_update_is_rejected_at_its_field(
     payload: dict[str, object],
     field: str,
 ) -> None:
-    created = create_type(client, settings, title="Название")
+    created = create_meeting_type(client, settings, title="Название")
 
     response = client.patch(
         f"/api/v1/meeting-types/{created['id']}",
@@ -212,7 +204,7 @@ def test_update_of_unknown_type_is_not_found(client: TestClient, settings: Setti
 def test_delete_removes_type_and_its_bookings(
     client: TestClient, settings: Settings, db: Session, now: datetime
 ) -> None:
-    created = create_type(client, settings, title="Удаляемая")
+    created = create_meeting_type(client, settings, title="Удаляемая")
     booking = add_booking(db, int(created["id"]), start=upcoming_start(now), now=now)
 
     response = client.delete(f"/api/v1/meeting-types/{created['id']}")
@@ -234,7 +226,7 @@ def test_delete_of_unknown_type_is_not_found(client: TestClient, settings: Setti
 def test_guest_cannot_update_or_delete_meeting_type(
     client: TestClient, settings: Settings
 ) -> None:
-    created = create_type(client, settings, title="Чужой тип")
+    created = create_meeting_type(client, settings, title="Чужой тип")
     client.cookies.clear()
 
     update = client.patch(
@@ -253,7 +245,7 @@ def test_guest_cannot_update_or_delete_meeting_type(
 def test_cookie_of_another_email_cannot_update_or_delete(
     client: TestClient, settings: Settings
 ) -> None:
-    created = create_type(client, settings, title="Чужой тип")
+    created = create_meeting_type(client, settings, title="Чужой тип")
     client.cookies.clear()
     client.cookies.set(settings.session_cookie_name, "guest@example.com")
 

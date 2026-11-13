@@ -21,6 +21,7 @@ const MEETING_TYPE: MeetingTypeRead = {
   created_at: '2026-11-10T09:00:00',
   bookings_count: 0,
   has_available_slots: true,
+  duration_locked: false,
 }
 
 function slot(iso: string, available = true): SlotRead {
@@ -218,6 +219,25 @@ describe('MeetingTypeCalendarPage', () => {
 
     expect(await screen.findByRole('link', { name: '09:00' })).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('не листает в месяц, где все дни заняты', async () => {
+    serve(MEETING_TYPE, [
+      slot('2026-11-30T06:00:00Z'),
+      slot('2026-12-01T06:00:00Z', false),
+      slot('2026-12-02T06:00:00Z', false),
+    ])
+
+    renderCalendar()
+
+    expect(await screen.findByText('Ноябрь 2026 г.')).toBeInTheDocument()
+    // Декабрь попадает в окно, но свободных дней в нём нет: листать некуда.
+    expect(
+      screen.getByRole('button', { name: 'Следующий месяц' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'понедельник, 30 ноября' }),
+    ).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('листает только вперёд: назад листать некуда', async () => {

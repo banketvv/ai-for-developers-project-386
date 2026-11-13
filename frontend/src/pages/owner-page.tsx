@@ -4,10 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiError } from '@/lib/api'
+import { LOAD_ERROR, RETRY_LABEL, SUBMIT_ERROR } from '@/lib/messages'
 import { useSession } from '@/lib/session'
 
-const SUBMIT_ERROR = 'Не удалось отправить, попробуйте ещё раз'
-const LOAD_ERROR = 'Не удалось загрузить, попробуйте ещё раз'
 const FORBIDDEN_ERROR = 'Этот email не принадлежит владельцу'
 
 function OwnerPage() {
@@ -34,11 +33,14 @@ function OwnerPage() {
   }
 
   async function handleChangeEmail() {
+    setError(null)
     setPending(true)
     try {
       await logOut()
       setEmail('')
-      setError(null)
+    } catch {
+      // Смена почты не удалась: сессия остаётся, отказ виден на месте формы.
+      setError(SUBMIT_ERROR)
     } finally {
       setPending(false)
     }
@@ -53,7 +55,7 @@ function OwnerPage() {
             {LOAD_ERROR}
           </p>
           <Button variant="outline" onClick={() => void reload()}>
-            Повторить
+            {RETRY_LABEL}
           </Button>
         </div>
       ) : isOwner ? (
@@ -61,6 +63,11 @@ function OwnerPage() {
           <p className="text-sm leading-relaxed">
             Вы вошли как владелец{ownerName ? `: ${ownerName}` : ''}.
           </p>
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
           <Button
             variant="outline"
             disabled={pending}

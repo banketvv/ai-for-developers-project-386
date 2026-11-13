@@ -23,6 +23,11 @@ class AppError(Exception):
         self.fields = fields or {}
 
 
+def not_found(message: str) -> AppError:
+    """Единый 404 на любой неизвестный ресурс: код и статус заданы здесь."""
+    return AppError(code="not_found", message=message, status_code=404)
+
+
 def error_response(
     status_code: int,
     code: str,

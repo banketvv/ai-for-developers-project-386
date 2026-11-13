@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Проверяет, что закоммиченные артефакты контракта совпадают с исходником.
-// Пересобирает всё и падает, если git видит расхождение или новый файл.
+// Пересобирает всё и падает, если содержимое разошлось или появился новый файл.
 import { spawnSync } from 'node:child_process'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -23,13 +23,23 @@ const watched = [
   'backend/app/schemas/contract.py',
 ]
 
-const status = spawnSync('git', ['status', '--porcelain', '--', ...watched], {
+// Сравниваем содержимое, а не stat: Windows-чекаут с autocrlf иначе даёт
+// ложное «изменено» у только что перезаписанных файлов.
+const diff = spawnSync('git', ['diff', '--exit-code', '--', ...watched], {
   cwd: repoRoot,
-  encoding: 'utf8',
+  stdio: 'inherit',
   shell: true,
 })
-if (status.stdout.trim()) {
-  console.error(status.stdout.trimEnd())
+const untracked = spawnSync(
+  'git',
+  ['ls-files', '--others', '--exclude-standard', '--', ...watched],
+  { cwd: repoRoot, encoding: 'utf8', shell: true },
+)
+
+if (diff.status !== 0 || untracked.stdout.trim()) {
+  if (untracked.stdout.trim()) {
+    console.error(untracked.stdout.trimEnd())
+  }
   console.error(
     '\nАртефакты контракта устарели. Запустите `mise run api:generate` и закоммитьте результат.',
   )

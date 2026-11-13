@@ -24,6 +24,7 @@ const MEETING_TYPE: MeetingTypeRead = {
   created_at: '2026-11-10T09:00:00',
   bookings_count: 0,
   has_available_slots: true,
+  duration_locked: false,
 }
 
 const BOOKING: BookingRead = {

@@ -33,6 +33,7 @@ def to_read(
     *,
     bookings_count: int,
     has_available_slots: bool,
+    duration_locked: bool,
 ) -> MeetingTypeRead:
     """Собирает ответ по типу встречи и вычисленным полям."""
     return MeetingTypeRead(
@@ -43,7 +44,16 @@ def to_read(
         created_at=meeting_type.created_at,
         bookings_count=bookings_count,
         has_available_slots=has_available_slots,
+        duration_locked=duration_locked,
     )
+
+
+async def type_ids_with_upcoming_bookings(session: AsyncSession, now: datetime) -> set[int]:
+    """Типы с предстоящими бронями: у них длительность заперта — одним запросом."""
+    rows = await session.execute(
+        select(Booking.meeting_type_id).where(Booking.start > now).distinct()
+    )
+    return set(rows.scalars())
 
 
 async def list_meeting_types(
@@ -65,6 +75,7 @@ async def list_meeting_types(
         )
     )
     busy = await upcoming_intervals(session, now)
+    locked = await type_ids_with_upcoming_bookings(session, now)
     return [
         to_read(
             meeting_type,
@@ -75,6 +86,7 @@ async def list_meeting_types(
                 timezone=timezone,
                 busy=busy,
             ),
+            duration_locked=meeting_type.id in locked,
         )
         for meeting_type, count in rows.all()
     ]
@@ -107,6 +119,7 @@ async def create_meeting_type(
             timezone=timezone,
             busy=busy,
         ),
+        duration_locked=False,
     )
 
 
@@ -122,7 +135,7 @@ async def _read_with_computed(
     now: datetime,
     timezone: str,
 ) -> MeetingTypeRead:
-    """Считает число броней и наличие слотов для сохранённого типа."""
+    """Считает число броней, наличие слотов и блокировку длительности."""
     bookings_count = await session.scalar(
         select(func.count(Booking.id)).where(Booking.meeting_type_id == meeting_type.id)
     )
@@ -136,6 +149,7 @@ async def _read_with_computed(
             timezone=timezone,
             busy=busy,
         ),
+        duration_locked=await has_upcoming_bookings(session, meeting_type.id, now=now),
     )
 
 

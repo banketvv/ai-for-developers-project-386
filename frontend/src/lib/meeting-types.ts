@@ -8,6 +8,7 @@ export type MeetingTypeRead = {
   created_at: string
   bookings_count: number
   has_available_slots: boolean
+  duration_locked: boolean
 }
 
 export type MeetingTypeCreate = {

@@ -119,7 +119,10 @@ def test_duration_is_locked_while_upcoming_booking_exists(
 
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "duration_locked"
-    assert client.get(f"/api/v1/meeting-types/{created['id']}").json()["duration_minutes"] == 30
+    detail = client.get(f"/api/v1/meeting-types/{created['id']}").json()
+    assert detail["duration_minutes"] == 30
+    # Признак блокировки считает сервер: клиент не выводит его из общего числа броней.
+    assert detail["duration_locked"] is True
 
 
 def test_title_and_description_stay_editable_with_upcoming_bookings(
@@ -168,6 +171,12 @@ def test_past_bookings_do_not_lock_duration(
 
     assert response.status_code == 200
     assert response.json()["duration_minutes"] == 45
+    assert response.json()["duration_locked"] is False
+    detail = client.get(f"/api/v1/meeting-types/{created['id']}").json()
+    assert detail["duration_minutes"] == 45
+    assert detail["duration_locked"] is False
+    # Общее число броней остаётся для предупреждения об удалении.
+    assert detail["bookings_count"] == 1
 
 
 @pytest.mark.parametrize(

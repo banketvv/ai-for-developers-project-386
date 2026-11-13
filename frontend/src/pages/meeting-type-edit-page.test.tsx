@@ -19,6 +19,7 @@ function meetingType(
     created_at: '2026-11-16T09:00:00',
     bookings_count: 0,
     has_available_slots: true,
+    duration_locked: false,
     ...overrides,
   }
 }
@@ -79,6 +80,7 @@ describe('MeetingTypeEditPage', () => {
       title: 'Занятая',
       duration_minutes: 30,
       bookings_count: 2,
+      duration_locked: true,
     })
     server.use(
       http.get(sessionUrl, ownerSession),
@@ -89,6 +91,40 @@ describe('MeetingTypeEditPage', () => {
 
     expect(await screen.findByLabelText('Длительность')).toBeDisabled()
     expect(screen.getByText(DURATION_LOCKED_HINT)).toBeInTheDocument()
+  })
+
+  it('без предстоящих броней меняет длительность, даже если брони были', async () => {
+    const user = userEvent.setup()
+    const past = meetingType({
+      id: 3,
+      title: 'Прошедшая',
+      description: 'Была вчера',
+      bookings_count: 2,
+      duration_locked: false,
+    })
+    const patched: unknown[] = []
+    server.use(
+      http.get(sessionUrl, ownerSession),
+      http.get(meetingTypeUrl(3), () => HttpResponse.json(past)),
+      http.patch(meetingTypeUrl(3), async ({ request }) => {
+        patched.push(await request.json())
+        return HttpResponse.json({ ...past, duration_minutes: 45 })
+      }),
+      http.get(meetingTypesUrl, () => HttpResponse.json([])),
+    )
+
+    renderApp(['/owner/types/3/edit'])
+
+    expect(await screen.findByLabelText('Длительность')).toBeEnabled()
+    expect(screen.queryByText(DURATION_LOCKED_HINT)).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Длительность'), '45')
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    expect(await screen.findByText('Тип сохранён')).toBeInTheDocument()
+    expect(patched).toEqual([
+      { title: 'Прошедшая', description: 'Была вчера', duration_minutes: 45 },
+    ])
   })
 
   it('без броней меняет длительность и возвращает к списку с сообщением', async () => {

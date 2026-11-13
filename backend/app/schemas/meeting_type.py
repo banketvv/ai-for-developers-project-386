@@ -77,3 +77,5 @@ class MeetingTypeRead(BaseModel):
     created_at: datetime
     bookings_count: int
     has_available_slots: bool
+    # Длительность заперта сервером, пока у типа есть предстоящие брони.
+    duration_locked: bool

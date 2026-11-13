@@ -40,6 +40,7 @@ def test_owner_creates_meeting_type_and_sees_it_in_the_list(
     assert created["description"] == "Короткий звонок"
     assert created["duration_minutes"] == 30
     assert created["bookings_count"] == 0
+    assert created["duration_locked"] is False
     assert created["has_available_slots"] is True
     assert isinstance(created["id"], int)
     assert created["created_at"]

@@ -49,6 +49,7 @@ function MeetingTypeEditPage() {
   const navigate = useNavigate()
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [bookingsCount, setBookingsCount] = useState(0)
+  const [durationLocked, setDurationLocked] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [duration, setDuration] = useState('30')
@@ -66,6 +67,7 @@ function MeetingTypeEditPage() {
       setDescription(loaded.description ?? '')
       setDuration(String(loaded.duration_minutes))
       setBookingsCount(loaded.bookings_count)
+      setDurationLocked(loaded.duration_locked)
       setStatus('ready')
     } catch (caught) {
       setStatus(
@@ -82,8 +84,7 @@ function MeetingTypeEditPage() {
     }
   }, [sessionStatus, isOwner, load])
 
-  // Длительность заперта серверными данными о бронях, а не догадкой на клиенте.
-  const durationLocked = bookingsCount > 0
+  // Длительность заперта серверными данными о предстоящих бронях, а не догадкой на клиенте.
 
   function validate(): FieldErrors {
     const errors: FieldErrors = {}

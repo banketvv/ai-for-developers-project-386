@@ -22,6 +22,7 @@ const CREATED = {
   created_at: '2026-11-16T09:00:00',
   bookings_count: 0,
   has_available_slots: true,
+  duration_locked: false,
 }
 
 function renderApp(initialEntries: string[]) {

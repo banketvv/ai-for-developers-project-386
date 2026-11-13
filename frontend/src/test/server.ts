@@ -5,6 +5,15 @@ import { apiUrl } from '@/lib/api'
 export const sessionUrl = apiUrl('/api/v1/session')
 export const meetingTypesUrl = apiUrl('/api/v1/meeting-types')
 
+export function meetingTypeUrl(id: number): string {
+  return apiUrl(`/api/v1/meeting-types/${id}`)
+}
+
+export function slotsUrl(id: number): string {
+  return apiUrl(`/api/v1/meeting-types/${id}/slots`)
+}
+
+
 const defaultHandlers = [
   http.get(sessionUrl, () =>
     HttpResponse.json({

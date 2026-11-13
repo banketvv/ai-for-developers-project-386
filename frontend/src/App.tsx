@@ -3,6 +3,7 @@ import { SiteLayout } from '@/components/site-layout'
 import { BookingPage } from '@/pages/booking-page'
 import { BookingsPage } from '@/pages/bookings-page'
 import { HomePage } from '@/pages/home-page'
+import { MeetingTypeCalendarPage } from '@/pages/meeting-type-calendar-page'
 import { MeetingTypeFormPage } from '@/pages/meeting-type-form-page'
 import { OwnerPage } from '@/pages/owner-page'
 import { SessionProvider } from '@/lib/session'
@@ -14,6 +15,10 @@ function AppRoutes() {
         <Route element={<SiteLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/booking" element={<BookingPage />} />
+          <Route
+            path="/booking/:meetingTypeId"
+            element={<MeetingTypeCalendarPage />}
+          />
           <Route path="/bookings" element={<BookingsPage />} />
           <Route path="/owner" element={<OwnerPage />} />
           <Route path="/owner/types/new" element={<MeetingTypeFormPage />} />

@@ -35,6 +35,27 @@ def overlaps(start: datetime, end: datetime, busy: Iterable[Interval]) -> bool:
     return any(start < busy_end and busy_start < end for busy_start, busy_end in busy)
 
 
+def slot_grid(
+    duration_minutes: int,
+    *,
+    now: datetime,
+    timezone: str,
+    busy: Iterable[Interval] = (),
+) -> list[tuple[datetime, bool]]:
+    """Все слоты окна по возрастанию: начало в наивном UTC и признак доступности."""
+    intervals = list(busy)
+    step = timedelta(minutes=duration_minutes)
+    grid: list[tuple[datetime, bool]] = []
+    for day in window_days(now, timezone):
+        if day.weekday() not in SCHEDULE_WEEKDAYS:
+            continue
+        for start in day_slot_starts(day, duration_minutes, timezone):
+            if start <= now:
+                continue
+            grid.append((start, not overlaps(start, start + step, intervals)))
+    return grid
+
+
 def has_available_slot(
     duration_minutes: int,
     *,
@@ -43,14 +64,12 @@ def has_available_slot(
     busy: Iterable[Interval] = (),
 ) -> bool:
     """Есть ли в окне свободный слот: прошедшее отсекается, занятое пропускается."""
-    intervals = list(busy)
-    step = timedelta(minutes=duration_minutes)
-    for day in window_days(now, timezone):
-        if day.weekday() not in SCHEDULE_WEEKDAYS:
-            continue
-        for start in day_slot_starts(day, duration_minutes, timezone):
-            if start <= now:
-                continue
-            if not overlaps(start, start + step, intervals):
-                return True
-    return False
+    return any(
+        available
+        for _, available in slot_grid(
+            duration_minutes,
+            now=now,
+            timezone=timezone,
+            busy=busy,
+        )
+    )

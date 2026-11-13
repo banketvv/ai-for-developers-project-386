@@ -2,8 +2,8 @@
 
 ## Repo map
 
-- `backend/` — FastAPI. ASGI entrypoint is `app.main:app`. Endpoints: `GET /health`, `/api/v1/session`, `/api/v1/meeting-types` (list, create, detail). Slots and bookings endpoints are not implemented yet; both tables (`meeting_types`, `bookings`) exist and are created by Alembic.
-- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, meeting-type list at `/booking`, owner login at `/owner`, type creation form at `/owner/types/new`; `/bookings` is still a stub. API client in `src/lib/api.ts`, network in tests is intercepted by MSW.
+- `backend/` — FastAPI. ASGI entrypoint is `app.main:app`. Endpoints: `GET /health`, `/api/v1/session`, `/api/v1/meeting-types` (list, create, detail), `/api/v1/meeting-types/{id}/slots`. Bookings endpoints are not implemented yet; both tables (`meeting_types`, `bookings`) exist and are created by Alembic.
+- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, meeting-type list at `/booking`, type calendar at `/booking/{meetingTypeId}`, owner login at `/owner`, type creation form at `/owner/types/new`; `/bookings` is still a stub. API client in `src/lib/api.ts`, display formatting in `src/lib/datetime.ts`, network in tests is intercepted by MSW.
 - `mise.toml` at the root — tool versions and all dev tasks. Local workflow and CI both go through mise.
 - `backend/README.md` — backend setup and conventions. Root `README.md` is the Hexlet project template.
 

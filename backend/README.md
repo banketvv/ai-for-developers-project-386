@@ -90,6 +90,16 @@ uv run fastapi run app/main.py
 
 Cookie `HttpOnly`, `SameSite=Lax`, срок 30 дней, `Secure` вне `local` и `test`. Ошибки API отдаются конвертом `{"error": {"code", "message", "fields"}}`.
 
+## Слоты
+
+`GET /api/v1/meeting-types/{id}/slots` отдаёт все слоты фиксированного окна «сегодня + 13 дней» по возрастанию, занятые тоже:
+
+```json
+{"slots": [{"start": "2026-11-16T06:00:00Z", "available": true}]}
+```
+
+Сетка — будни 09:00–18:00 в `OWNER_TIMEZONE`, шаг равен длительности типа; слот, не влезающий в 18:00 целиком, отбрасывается. Прошедшие слоты отсекает сервер. Слот занят, если пересекается с любой предстоящей бронью, независимо от типа встречи. Параметров и пагинации нет; неизвестный тип — `404`.
+
 ## Структура
 
 ```
@@ -106,7 +116,8 @@ backend/
 │   │       └── routes/
 │   │           ├── health.py
 │   │           ├── meeting_types.py
-│   │           └── session.py
+│   │           ├── session.py
+│   │           └── slots.py
 │   ├── core/
 │   │   ├── clock.py         # текущий момент и зависимость get_now
 │   │   ├── config.py        # Settings из env/.env
@@ -123,7 +134,8 @@ backend/
     ├── test_health.py
     ├── test_meeting_types.py
     ├── test_migrations.py
-    └── test_session.py
+    ├── test_session.py
+    └── test_slots.py
 ```
 
 Соглашения:
@@ -186,9 +198,9 @@ uv run mypy app tests
 - `GET /health` и тест на него;
 - опознание смотрящего по cookie: вход владельца и смена почты (`/api/v1/session`);
 - модели `MeetingType` и `Booking`, первая миграция Alembic;
-- список, создание и карточка типа встречи (`/api/v1/meeting-types`), создание — только владельцу.
+- список, создание и карточка типа встречи (`/api/v1/meeting-types`), создание — только владельцу;
+- слоты окна типа встречи (`/api/v1/meeting-types/{id}/slots`) с признаком занятости.
 
 В планах:
 
-- API слотов (`/api/v1/meeting-types/{id}/slots`);
 - API броней `/api/v1/bookings` и защита от двойного бронирования (`409 Conflict`).

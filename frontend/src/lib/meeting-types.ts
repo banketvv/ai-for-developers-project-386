@@ -22,6 +22,10 @@ export function listMeetingTypes(): Promise<MeetingTypeRead[]> {
   return apiRequest<MeetingTypeRead[]>(MEETING_TYPES_PATH)
 }
 
+export function getMeetingType(meetingTypeId: number): Promise<MeetingTypeRead> {
+  return apiRequest<MeetingTypeRead>(`${MEETING_TYPES_PATH}/${meetingTypeId}`)
+}
+
 export function createMeetingType(
   input: MeetingTypeCreate,
 ): Promise<MeetingTypeRead> {

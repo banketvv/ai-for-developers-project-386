@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { AppRoutes } from '@/App'
-import { meetingTypesUrl, server, sessionUrl } from '@/test/server'
+import { meetingTypesUrl, meetingTypeUrl, server, sessionUrl, slotsUrl } from '@/test/server'
 import type { MeetingTypeRead } from '@/lib/meeting-types'
 
 function meetingType(
@@ -135,6 +135,38 @@ describe('BookingPage', () => {
     expect(
       screen.queryByRole('link', { name: 'Создать тип' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('открывает календарь выбранного типа по клику на карточку', async () => {
+    const user = userEvent.setup()
+    const type = meetingType({
+      id: 2,
+      title: 'Разбор',
+      duration_minutes: 60,
+    })
+    server.use(
+      http.get(meetingTypesUrl, () => HttpResponse.json([type])),
+      http.get(meetingTypeUrl(2), () => HttpResponse.json(type)),
+      http.get(slotsUrl(2), () =>
+        HttpResponse.json({
+          slots: [{ start: '2026-11-16T06:00:00Z', available: true }],
+        }),
+      ),
+    )
+
+    renderApp(['/booking'])
+
+    const card = await screen.findByRole('link', { name: /Разбор/ })
+    expect(card).toHaveAttribute('href', '/booking/2')
+
+    await user.click(card)
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Разбор' }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('link', { name: '09:00' }),
+    ).toBeInTheDocument()
   })
 
   it('отличает пустой список от ошибки загрузки и повторяет запрос', async () => {

@@ -70,28 +70,35 @@ function BookingPage() {
         <ul className="mt-8 grid gap-4 sm:grid-cols-2">
           {meetingTypes.map((meetingType) => (
             <li key={meetingType.id}>
-              <article
-                aria-labelledby={`meeting-type-${meetingType.id}`}
-                className="flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
+              <Link
+                to={`/booking/${meetingType.id}`}
+                className="block h-full rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                <h2
-                  id={`meeting-type-${meetingType.id}`}
-                  className="text-xl font-semibold tracking-tight"
+                <article
+                  aria-labelledby={`meeting-type-${meetingType.id}`}
+                  className="flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-brand"
                 >
-                  {meetingType.title}
-                </h2>
-                {meetingType.description ? (
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {meetingType.description}
+                  <h2
+                    id={`meeting-type-${meetingType.id}`}
+                    className="text-xl font-semibold tracking-tight"
+                  >
+                    {meetingType.title}
+                  </h2>
+                  {meetingType.description ? (
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {meetingType.description}
+                    </p>
+                  ) : null}
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    {durationLabel(meetingType.duration_minutes)}
                   </p>
-                ) : null}
-                <p className="mt-4 text-sm text-muted-foreground">
-                  {durationLabel(meetingType.duration_minutes)}
-                </p>
-                {meetingType.has_available_slots ? null : (
-                  <p className="mt-2 text-sm font-medium">нет свободных слотов</p>
-                )}
-              </article>
+                  {meetingType.has_available_slots ? null : (
+                    <p className="mt-2 text-sm font-medium">
+                      нет свободных слотов
+                    </p>
+                  )}
+                </article>
+              </Link>
             </li>
           ))}
         </ul>

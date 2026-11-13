@@ -1,7 +1,10 @@
 import createClient from 'openapi-fetch'
 import type { paths } from '@/api/schema'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+// В dev-режиме бэкенд живёт на отдельном порту, а в собранном приложении
+// FastAPI отдаёт и API, и статику — запросы идут на тот же origin.
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:8000' : '')
 
 type ErrorEnvelope = {
   error?: {

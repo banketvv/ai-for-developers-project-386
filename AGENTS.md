@@ -2,8 +2,8 @@
 
 ## Repo map
 
-- `backend/` — FastAPI. ASGI entrypoint is `app.main:app`; `GET /health` is the only endpoint so far. No events/slots/bookings API yet.
-- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, shared header, stub routes `/booking` and `/bookings`; no API client yet.
+- `backend/` — FastAPI. ASGI entrypoint is `app.main:app`. Endpoints: `GET /health`, `/api/v1/session`, `/api/v1/meeting-types` (list, create, detail, update, delete), `/api/v1/meeting-types/{id}/slots`, `/api/v1/bookings` (list, create) and `/api/v1/bookings/{id}` (detail). Both tables (`meeting_types`, `bookings`) exist and are created by Alembic.
+- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, meeting-type list at `/booking`, type calendar at `/booking/{meetingTypeId}`, booking form at `/booking/{meetingTypeId}/{start}`, upcoming bookings at `/bookings`, booking confirmation at `/bookings/{bookingId}`, owner login at `/owner`, type creation form at `/owner/types/new`, type edit form at `/owner/types/{meetingTypeId}/edit`. API client in `src/lib/api.ts`, display formatting in `src/lib/datetime.ts`, network in tests is intercepted by MSW.
 - `mise.toml` at the root — tool versions and all dev tasks. Local workflow and CI both go through mise.
 - `backend/README.md` — backend setup and conventions. Root `README.md` is the Hexlet project template.
 
@@ -21,7 +21,7 @@ mise run backend:format      # ruff check --fix + ruff format
 mise tasks ls
 ```
 
-- Backend only: `mise run backend:dev`, `backend:lint`, `backend:test`.
+- Backend only: `mise run backend:dev`, `backend:migrate`, `backend:lint`, `backend:test`.
 - Frontend only: `mise run frontend:dev`, `frontend:lint`, `frontend:test`, `frontend:build`.
 - Frontend tests in watch mode: `mise run frontend:test:watch`.
 - Single backend test: `cd backend && uv run pytest tests/test_health.py -k health`.
@@ -36,7 +36,7 @@ mise tasks ls
 - shadcn v4 components import `cn` from the `cn` package and primitives from `radix-ui` (not `@radix-ui/react-*`). `src/lib/utils.ts` re-exports `cn`.
 - Tailwind v4 is CSS-first: there is no `tailwind.config.js`. Theme tokens live as CSS variables in `src/index.css`.
 - Backend style is enforced by `pyproject.toml`: ruff line length 99, `py313`, mypy `disallow_untyped_defs`. New backend code must be typed; run `mise run backend:format` before checking.
-- The DB is async SQLAlchemy + SQLite. `app/db/session.py` sets `PRAGMA foreign_keys=ON` and WAL; the DB file is `backend/app.db` (ignored). Alembic is installed but migrations are not initialized yet.
+- The DB is async SQLAlchemy + SQLite. `app/db/session.py` sets `PRAGMA foreign_keys=ON` and WAL; the DB file is `backend/app.db` (ignored). Alembic migrations live in `backend/migrations/` (`uv run alembic upgrade head`); they are excluded from ruff and mypy.
 - Read settings only through `app.core.config.get_settings()`. The service has one predefined owner from env and **no authentication by design** — don't add auth without asking.
 - Commit only `.env.example`. `backend/.env` and `frontend/.env.local` are gitignored and loaded by mise when present. Dev CORS allows `http://localhost:5173` / `127.0.0.1:5173`.
 - `.github/workflows/hexlet-check.yml` is auto-generated: never edit or rename it, and never rename the repository — Hexlet grading depends on it.
@@ -49,6 +49,9 @@ mise tasks ls
 - Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
   commitlint runs on every commit; the header fits 120 characters and each body line 100.
+  **Every commit names its ticket**: the header ends with the issue it serves, e.g.
+  `feat: add owner session login (#15)`. A commit serving no single ticket references the spec
+  (`(#14)`); merges made by `implement-spec` are the only exception.
   **Nothing lands on `main` as a merge commit** (`chore: merge origin/main` and the like): its
   history stays linear. Bring `main` into a worktree's branch with `git fetch origin && git rebase
 origin/main`, never `git merge`. The one exception is `implement-spec`, whose own steps win: the

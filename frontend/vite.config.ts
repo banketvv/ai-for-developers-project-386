@@ -14,5 +14,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Время показывается в поясе смотрящего; тесты закрепляют пояс,
+    // чтобы утверждения о времени не зависели от машины.
+    env: { TZ: 'Europe/Moscow' },
   },
 })

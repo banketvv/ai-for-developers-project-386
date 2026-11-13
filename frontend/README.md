@@ -2,6 +2,15 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
+## Окружение
+
+Клиент API берёт адрес бэкенда из `VITE_API_URL` (по умолчанию `http://localhost:8000`).
+Скопируйте шаблон и при необходимости поправьте значение; `.env.local` в git не попадает:
+
+```bash
+cp .env.example .env.local
+```
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

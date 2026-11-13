@@ -1,12 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { apiRequest } from '@/lib/api'
-
-type SessionRead = {
-  email: string | null
-  is_owner: boolean
-  owner_name: string
-}
+import { apiClient, unwrap } from '@/lib/api'
 
 type SessionState = {
   status: 'loading' | 'ready' | 'error'
@@ -35,7 +29,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async () => {
     try {
-      const session = await apiRequest<SessionRead>('/api/v1/session')
+      const session = await unwrap(apiClient.GET('/api/v1/session'))
       setState({
         status: 'ready',
         email: session.email,
@@ -58,17 +52,14 @@ function SessionProvider({ children }: { children: ReactNode }) {
 
   const logIn = useCallback(
     async (email: string) => {
-      await apiRequest<null>('/api/v1/session', {
-        method: 'POST',
-        body: { email },
-      })
+      await unwrap(apiClient.POST('/api/v1/session', { body: { email } }))
       await reload()
     },
     [reload],
   )
 
   const logOut = useCallback(async () => {
-    await apiRequest<null>('/api/v1/session', { method: 'DELETE' })
+    await unwrap(apiClient.DELETE('/api/v1/session'))
     await reload()
   }, [reload])
 

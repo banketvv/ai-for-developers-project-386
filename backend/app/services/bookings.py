@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -8,6 +9,7 @@ from sqlalchemy.orm import joinedload
 from app.core.errors import AppError, not_found
 from app.db.models import Booking, MeetingType
 from app.schemas.booking import BookingCreate, BookingMeetingTypeRead, BookingRead
+from app.schemas.meeting_type import DurationMinutes
 from app.services.meeting_types import upcoming_intervals
 from app.services.session import Viewer, normalize_email
 from app.services.slots import overlaps, slot_grid
@@ -24,7 +26,7 @@ def to_read(booking: Booking, meeting_type: MeetingType) -> BookingRead:
         meeting_type=BookingMeetingTypeRead(
             id=meeting_type.id,
             title=meeting_type.title,
-            duration_minutes=meeting_type.duration_minutes,
+            duration_minutes=cast(DurationMinutes, meeting_type.duration_minutes),
         ),
     )
 

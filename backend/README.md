@@ -144,6 +144,25 @@ Cookie `HttpOnly`, `SameSite=Lax`, срок 30 дней, `Secure` вне `local`
 
 `GET /api/v1/bookings` отдаёт предстоящие брони по возрастанию начала. Гость видит только брони своей почты, а без cookie получает пустой список; владелец видит все брони с именем и почтой гостя.
 
+## Контракт API
+
+Источник правды — TypeSpec в `api/` в корне репозитория. Pydantic-модели генерируются из
+OpenAPI в `app/schemas/contract.py`; руками генерируемые файлы не правят:
+
+```bash
+mise run api:generate   # TypeSpec → OpenAPI → Pydantic-модели
+mise run api:check      # проверить, что артефакты не устарели
+```
+
+`app/schemas/base.py` — база сгенерированных моделей: обрезает строки, трактует пустую строку в
+необязательном поле как `null` и сериализует моменты времени в UTC с суффиксом `Z`.
+Нормализация почты и приведение времени к наивному UTC живут в наследниках
+(`app/schemas/booking.py`). `app/api/responses.py` документирует коды ошибок у маршрутов.
+
+Совпадение сервера с контрактом проверяет `tests/test_contract.py`: набор путей и методов, коды
+ответов и формы запросов/успешных ответов. Если маршрут или модель разошлись со спецификацией,
+этот тест падает.
+
 ## Структура
 
 ```
@@ -157,6 +176,7 @@ backend/
 │   ├── api/
 │   │   ├── cookies.py       # установка и очистка cookie сессии
 │   │   ├── deps.py          # зависимости: сессия БД, смотрящий, владелец, часы
+│   │   ├── responses.py     # описания ошибок для OpenAPI
 │   │   └── v1/
 │   │       └── routes/
 │   │           ├── bookings.py
@@ -172,13 +192,17 @@ backend/
 │   │   ├── base.py          # DeclarativeBase и naming_convention
 │   │   ├── models/          # MeetingType, Booking
 │   │   └── session.py       # async engine, SessionFactory, get_session
-│   ├── schemas/             # Pydantic-схемы API и общий сериализатор моментов
+│   ├── schemas/
+│   │   ├── base.py          # ContractModel: нормализация и сериализация
+│   │   ├── contract.py      # сгенерированные Pydantic-модели (не править)
+│   │   └── ...              # наследники с правилами домена
 │   └── services/            # правила домена: сессия, типы встреч, слоты, брони
 ├── migrations/              # Alembic: env.py и ревизии
 └── tests/
     ├── conftest.py          # приложение с подменёнными настройками, часами и БД
     ├── support.py           # общие помощники: вход владельца, создание типа
     ├── test_bookings.py
+    ├── test_contract.py     # сверка сервера с OpenAPI-контрактом
     ├── test_health.py
     ├── test_meeting_type_edit.py
     ├── test_meeting_types.py

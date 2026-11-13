@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiError } from '@/lib/api'
 import { createMeetingType } from '@/lib/meeting-types'
+import type { DurationMinutes } from '@/lib/meeting-types'
 import {
   LOAD_ERROR,
   LOGIN_AGAIN_LABEL,
@@ -61,7 +62,7 @@ function MeetingTypeFormPage() {
       await createMeetingType({
         title: title.trim(),
         description: description.trim() || null,
-        duration_minutes: Number(duration),
+        duration_minutes: Number(duration) as DurationMinutes,
       })
       navigate('/booking', { state: { created: true } })
     } catch (caught) {

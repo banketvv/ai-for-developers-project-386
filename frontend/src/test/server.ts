@@ -13,6 +13,12 @@ export function slotsUrl(id: number): string {
   return apiUrl(`/api/v1/meeting-types/${id}/slots`)
 }
 
+export const bookingsUrl = apiUrl('/api/v1/bookings')
+
+export function bookingUrl(id: number): string {
+  return apiUrl(`/api/v1/bookings/${id}`)
+}
+
 
 const defaultHandlers = [
   http.get(sessionUrl, () =>

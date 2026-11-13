@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import AppError
 from app.db.models import Booking, MeetingType
 from app.schemas.meeting_type import MeetingTypeCreate, MeetingTypeRead
-from app.services.slots import Interval, has_available_slot
+from app.schemas.slot import SlotRead, SlotsRead
+from app.services.slots import Interval, has_available_slot, slot_grid
 
 # Дольше любого типа встречи не бывает: более ранняя бронь уже не пересечётся со слотом.
 MAX_DURATION = timedelta(minutes=60)
@@ -133,4 +134,29 @@ async def get_meeting_type(
             timezone=timezone,
             busy=busy,
         ),
+    )
+
+
+async def list_slots(
+    session: AsyncSession,
+    meeting_type_id: int,
+    *,
+    now: datetime,
+    timezone: str,
+) -> SlotsRead:
+    """Все слоты окна типа встречи: занятые входят с признаком недоступности."""
+    meeting_type = await session.get(MeetingType, meeting_type_id)
+    if meeting_type is None:
+        raise AppError(code="not_found", message="Тип встречи не найден", status_code=404)
+    busy = await upcoming_intervals(session, now)
+    return SlotsRead(
+        slots=[
+            SlotRead(start=start, available=available)
+            for start, available in slot_grid(
+                meeting_type.duration_minutes,
+                now=now,
+                timezone=timezone,
+                busy=busy,
+            )
+        ]
     )

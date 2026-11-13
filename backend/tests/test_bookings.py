@@ -239,17 +239,22 @@ def test_two_concurrent_requests_for_one_slot_give_one_booking(
         meeting_type = create_meeting_type(
             setup_client, settings, title="Час", duration_minutes=60
         )
-    payload = booking_payload(meeting_type["id"])
+    # Гости разные: с одним email проигравший мог бы получить already_booked вместо
+    # slot_taken — это правило тоже нарушено, и его срабатывание зависит от гонки.
+    payloads = [
+        booking_payload(meeting_type["id"], guest_email=f"guest{index}@example.com")
+        for index in range(2)
+    ]
     barrier = threading.Barrier(2)
     results: list[tuple[int, dict[str, Any]]] = []
 
-    def attempt() -> None:
+    def attempt(payload: dict[str, object]) -> None:
         with TestClient(app) as thread_client:
             barrier.wait(timeout=10)
             response = thread_client.post("/api/v1/bookings", json=payload)
             results.append((response.status_code, response.json()))
 
-    threads = [threading.Thread(target=attempt) for _ in range(2)]
+    threads = [threading.Thread(target=attempt, args=(payload,)) for payload in payloads]
     for thread in threads:
         thread.start()
     for thread in threads:

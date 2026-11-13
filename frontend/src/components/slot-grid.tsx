@@ -16,7 +16,9 @@ function SlotGrid({ meetingTypeId, slots, timeZone }: SlotGridProps) {
         <li key={slot.start}>
           {slot.available ? (
             <Button asChild variant="outline" className="w-full">
-              <Link to={`/booking/${meetingTypeId}/${slot.start}`}>
+              <Link
+                to={`/booking/${meetingTypeId}/${encodeURIComponent(slot.start)}`}
+              >
                 {formatSlotTime(slot.start, timeZone)}
               </Link>
             </Button>

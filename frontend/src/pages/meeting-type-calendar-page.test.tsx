@@ -112,10 +112,28 @@ describe('MeetingTypeCalendarPage', () => {
     // Слоты идут от 09:00 с шагом в час; 18:00 не начинается, поэтому его нет.
     expect(
       screen.getByRole('link', { name: '09:00' }),
-    ).toHaveAttribute('href', '/booking/7/2026-11-16T06:00:00Z')
+    ).toHaveAttribute('href', '/booking/7/2026-11-16T06%3A00%3A00Z')
     expect(screen.getByRole('link', { name: '13:00' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: '18:00' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '14:00' })).toBeDisabled()
+  })
+
+  it('открывает оформление записи по клику на слот', async () => {
+    const user = userEvent.setup()
+    serve(MEETING_TYPE, MONDAY_SLOTS)
+
+    renderCalendar()
+
+    await user.click(await screen.findByRole('link', { name: '09:00' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Оформление записи' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Знакомство' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/понедельник, 16 ноября/)).toBeInTheDocument()
+    expect(screen.getByText(/09:00/)).toBeInTheDocument()
   })
 
   it('переключает сетку слотов при выборе другого дня', async () => {
@@ -134,7 +152,7 @@ describe('MeetingTypeCalendarPage', () => {
     ).toHaveTextContent('вторник, 17 ноября')
     expect(screen.getByRole('link', { name: '10:00' })).toHaveAttribute(
       'href',
-      '/booking/7/2026-11-17T07:00:00Z',
+      '/booking/7/2026-11-17T07%3A00%3A00Z',
     )
     expect(
       screen.queryByRole('link', { name: '09:00' }),

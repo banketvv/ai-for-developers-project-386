@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { SiteLayout } from '@/components/site-layout'
+import { BookingConfirmationPage } from '@/pages/booking-confirmation-page'
+import { BookingFormPage } from '@/pages/booking-form-page'
 import { BookingPage } from '@/pages/booking-page'
 import { BookingsPage } from '@/pages/bookings-page'
 import { HomePage } from '@/pages/home-page'
@@ -19,7 +21,15 @@ function AppRoutes() {
             path="/booking/:meetingTypeId"
             element={<MeetingTypeCalendarPage />}
           />
+          <Route
+            path="/booking/:meetingTypeId/:start"
+            element={<BookingFormPage />}
+          />
           <Route path="/bookings" element={<BookingsPage />} />
+          <Route
+            path="/bookings/:bookingId"
+            element={<BookingConfirmationPage />}
+          />
           <Route path="/owner" element={<OwnerPage />} />
           <Route path="/owner/types/new" element={<MeetingTypeFormPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

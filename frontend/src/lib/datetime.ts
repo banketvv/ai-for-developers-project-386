@@ -36,6 +36,10 @@ export function formatSlotTime(instant: string, timeZone: string): string {
   }).format(new Date(instant))
 }
 
+export function formatInstantDate(instant: string, timeZone: string): string {
+  return formatDayLabel(localDayKey(instant, timeZone))
+}
+
 // Ключ дня уже приведён к поясу смотрящего, поэтому подпись собирается по UTC:
 // полдень UTC не переедет на соседний день.
 export function formatDayLabel(dayKey: string): string {

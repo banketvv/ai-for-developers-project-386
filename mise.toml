@@ -135,6 +135,19 @@ description = "Тесты frontend в режиме наблюдения"
 dir = "frontend"
 run = "npm run test:watch"
 
+# --- Браузерные тесты ---
+
+[tasks."e2e:install"]
+description = "Установить Chromium для Playwright"
+dir = "frontend"
+run = "npx playwright install chromium"
+
+[tasks.e2e]
+description = "Браузерные E2E-тесты Playwright (поднимает backend и frontend)"
+dir = "frontend"
+tags = ["test"]
+run = "npm run e2e"
+
 [tasks."frontend:build"]
 description = "Сборка frontend (tsc + vite build)"
 dir = "frontend"

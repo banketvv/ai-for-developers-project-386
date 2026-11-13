@@ -44,6 +44,11 @@ coverage.xml
 .tox/
 .nox/
 
+### Playwright ###
+test-results/
+playwright-report/
+blob-report/
+
 ### Linters / type checkers ###
 .ruff_cache/
 .mypy_cache/

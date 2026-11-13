@@ -20,6 +20,8 @@ mise run setup               # uv sync + npm install (local, includes api/)
 mise run setup:ci            # uv sync + npm ci (lockfile-strict)
 mise run dev                 # backend :8000 + frontend :5173 together
 mise run check               # contract + backend lint/test + frontend lint/build
+mise run check:agent         # то же, но с надёжным кодом выхода (Windows и Linux)
+mise run commits:check       # проверить сообщения коммитов ветки
 mise run api:generate        # TypeSpec → OpenAPI → TS-типы и Pydantic-модели
 mise run api:check           # упасть, если артефакты контракта устарели
 mise run e2e                 # браузерные E2E-тесты Playwright (поднимает оба сервера)
@@ -34,7 +36,8 @@ mise tasks ls
 - Browser tests: `mise run e2e` runs Playwright in Chromium against the real FastAPI and Vite. They start their own servers on `127.0.0.1:8001`/`:5174` with a throwaway `backend/e2e.db` and a fixed clock (`FAKE_NOW`), and are **not** part of `mise run check` (they need a browser). Specs live in `frontend/e2e/**/*.e2e.ts` — the `.e2e.ts` suffix keeps Vitest away from them.
 - Single backend test: `cd backend && uv run pytest tests/test_health.py -k health`.
 - Frontend tests are Vitest + Testing Library on jsdom, colocated as `*.test.tsx`. `npm run lint` is **oxlint**, not ESLint. `npm run build` (`tsc -b && vite build`) is the only TypeScript typecheck — run it after TS changes.
-- `mise run check` runs its six tasks in parallel; one failure does not stop the others, but the run exits non-zero.
+- `mise run check` runs its six tasks in parallel; one failure does not stop the others, but the run exits non-zero. Under PowerShell a passing run can print `NativeCommandError` and look failed; use `mise run check:agent` for a trustworthy exit code.
+- Shell differences between Windows PowerShell and Linux bash: `docs/agents/shell.md`. Prefer Python for scripts that must run on both.
 - `api:check` regenerates the contract artifacts and fails when they differ from git — run `mise run api:generate` and commit the result after any `.tsp` change.
 
 ## Non-obvious constraints
@@ -51,15 +54,17 @@ mise tasks ls
 - `FAKE_NOW` (settings `fake_now`) freezes the backend clock; it exists for the Playwright suite only and must not be set in production.
 - Commit only `.env.example`. `backend/.env` and `frontend/.env.local` are gitignored and loaded by mise when present. Dev CORS allows `http://localhost:5173` / `127.0.0.1:5173`.
 - `.github/workflows/hexlet-check.yml` is auto-generated: never edit or rename it, and never rename the repository — Hexlet grading depends on it.
-- `.github/workflows/ci.yml` runs on every push: `mise run setup:ci` then `mise run check`. Keep `frontend/package-lock.json` committed or `npm ci` fails.
+- `.github/workflows/ci.yml` runs on every push: checks, commit messages, a Docker build/health smoke test, and Playwright. Keep `frontend/package-lock.json` committed or `npm ci` fails.
 - `app/__init__.py` still contains the uv scaffold `main()` that prints "Hello from backend!". Ignore it; the real entrypoint is `app.main:app`.
 - On Windows mise is installed via WinGet; a non-interactive shell may not have `mise` on PATH until restarted. Prefer `mise run ...` over raw `uv`/`npm` so versions come from `mise.toml`.
+- `gh` is pinned in `mise.toml` but may be missing from a bare `PATH`. Run it as `mise exec -- gh ...`; GitHub MCP tools are the primary path for issues.
 
 ## Conventions
 
 - Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
-  commitlint runs on every commit; the header fits 120 characters and each body line 100.
+  The `.githooks/commit-msg` hook (enabled by `mise run setup`) and the `Commit messages` CI
+  job check it; the header fits 120 characters and each body line 100.
   **Every commit names its ticket**: the header ends with the issue it serves, e.g.
   `feat: add owner session login (#15)`. A commit serving no single ticket references the spec
   (`(#14)`); merges made by `implement-spec` are the only exception.
@@ -91,7 +96,7 @@ Conventional Commits on `main` and keeps an open release PR that bumps `version.
 
 ### Issue tracker
 
-Issues live in GitHub Issues for `banketvv/ai-for-developers-project-386`, driven by the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues for `banketvv/ai-for-developers-project-386`. In OpenCode prefer GitHub MCP tools; `gh` is in `mise.toml` and runs as `mise exec -- gh`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

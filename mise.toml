@@ -7,6 +7,7 @@ min_version = "2026.11.0"
 python = "3.13"
 node = "22"
 uv = "latest"
+gh = "latest"
 
 [env]
 # Локальные .env подхватываются, если файлы существуют.
@@ -16,12 +17,17 @@ _.file = ["backend/.env", "frontend/.env.local"]
 # --- Установка зависимостей ---
 
 [tasks.setup]
-description = "Установить зависимости backend и frontend"
+description = "Установить зависимости backend и frontend, включить git-хуки"
 run = [
   { task = "backend:install" },
   { task = "frontend:install" },
   { task = "api:install" },
+  { task = "git:hooks" },
 ]
+
+[tasks."git:hooks"]
+description = "Включить git-хуки из .githooks"
+run = "git config core.hooksPath .githooks"
 
 [tasks."backend:install"]
 description = "Синхронизировать Python-зависимости (uv sync)"
@@ -92,6 +98,14 @@ run = "npm run dev"
 [tasks.check]
 description = "Линтеры, типы, тесты и сборка"
 depends = ["api:check", "backend:lint", "backend:test", "frontend:lint", "frontend:test", "frontend:build"]
+
+[tasks."check:agent"]
+description = "Полный прогон проверок с надёжным кодом выхода"
+run = "python scripts/check.py"
+
+[tasks."commits:check"]
+description = "Проверить сообщения коммитов ветки"
+run = "python scripts/check_commits.py"
 
 [tasks."backend:lint"]
 description = "ruff + mypy для backend"

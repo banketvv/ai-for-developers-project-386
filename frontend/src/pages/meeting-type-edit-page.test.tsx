@@ -60,6 +60,29 @@ describe('MeetingTypeEditPage', () => {
     ).toHaveAttribute('href', '/owner')
   })
 
+  it('объясняет недействительную владельческую сессию и ведёт на вход', async () => {
+    server.use(
+      http.get(sessionUrl, () =>
+        HttpResponse.json({
+          email: 'guest@example.com',
+          is_owner: false,
+          owner_name: 'Владелец календаря',
+        }),
+      ),
+    )
+
+    renderApp(['/owner/types/3/edit'])
+
+    expect(
+      await screen.findByText(/Владельческая сессия недействительна/),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Войти снова' })).toHaveAttribute(
+      'href',
+      '/owner',
+    )
+    expect(screen.queryByLabelText('Название')).not.toBeInTheDocument()
+  })
+
   it('открывается с текущими значениями типа встречи', async () => {
     server.use(
       http.get(sessionUrl, ownerSession),

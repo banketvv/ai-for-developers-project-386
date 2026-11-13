@@ -14,6 +14,8 @@ import type { MeetingTypeRead } from '@/lib/meeting-types'
 import {
   DURATION_LOCKED,
   LOAD_ERROR,
+  LOGIN_AGAIN_LABEL,
+  OWNER_SESSION_INVALID,
   RETRY_LABEL,
   SUBMIT_ERROR,
 } from '@/lib/messages'
@@ -45,7 +47,8 @@ function bookingsLabel(count: number): string {
 function MeetingTypeEditPage() {
   const params = useParams()
   const meetingTypeId = Number(params.meetingTypeId)
-  const { status: sessionStatus, isOwner, reload: reloadSession } = useSession()
+  const { status: sessionStatus, email, isOwner, reload: reloadSession } =
+    useSession()
   const navigate = useNavigate()
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [bookingsCount, setBookingsCount] = useState(0)
@@ -184,10 +187,14 @@ function MeetingTypeEditPage() {
         </h1>
         <div className="mt-6 max-w-sm space-y-3">
           <p role="alert" className="text-sm text-destructive">
-            Редактировать типы встреч может только владелец.
+            {email
+              ? OWNER_SESSION_INVALID
+              : 'Редактировать типы встреч может только владелец.'}
           </p>
           <Button asChild variant="outline">
-            <Link to="/owner">Войти как владелец</Link>
+            <Link to="/owner">
+              {email ? LOGIN_AGAIN_LABEL : 'Войти как владелец'}
+            </Link>
           </Button>
         </div>
       </section>

@@ -49,6 +49,9 @@ mise tasks ls
 - Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
   commitlint runs on every commit; the header fits 120 characters and each body line 100.
+  **Every commit names its ticket**: the header ends with the issue it serves, e.g.
+  `feat: add owner session login (#15)`. A commit serving no single ticket references the spec
+  (`(#14)`); merges made by `implement-spec` are the only exception.
   **Nothing lands on `main` as a merge commit** (`chore: merge origin/main` and the like): its
   history stays linear. Bring `main` into a worktree's branch with `git fetch origin && git rebase
 origin/main`, never `git merge`. The one exception is `implement-spec`, whose own steps win: the

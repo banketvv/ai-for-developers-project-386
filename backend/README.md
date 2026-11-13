@@ -55,6 +55,7 @@ Copy-Item .env.example .env
 | `SESSION_COOKIE_NAME` | `guest_email` | Имя cookie, которой сервис опознаёт смотрящего |
 | `SESSION_COOKIE_MAX_AGE` | `2592000` | Срок жизни cookie в секундах (30 дней) |
 | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Origin'ы фронтенда через запятую |
+| `FAKE_NOW` | — | Только для E2E: фиксирует «сейчас» (ISO 8601), в production не задаётся |
 
 ## Запуск
 

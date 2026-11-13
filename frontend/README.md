@@ -22,6 +22,24 @@ cp .env.example .env.local
 обёртки над клиентом: они возвращают данные или бросают `ApiError` с машинным кодом.
 Подробнее о конвейере — `api/README.md`.
 
+## Браузерные тесты
+
+`mise run e2e` запускает Playwright в Chromium против настоящего стека: тесты сами
+поднимают FastAPI на `127.0.0.1:8001` (временная база `backend/e2e.db`, часы зафиксированы
+через `FAKE_NOW`) и Vite на `127.0.0.1:5174`, а после прогона их гасят. Первый запуск
+требует браузера: `mise run e2e:install`.
+
+Сценарии лежат в `e2e/*.e2e.ts` и проверяют то, чего не видит jsdom: путь гостя от
+календаря до подтверждения, пустое состояние предстоящих, а также вход владельца,
+создание, правку и удаление типа встречи. Суффикс `.e2e.ts` выбран специально: Vitest
+такие файлы не подхватывает, а `mise run check` остаётся быстрым и браузера не требует.
+
+Отлаживать удобнее в интерактивном режиме:
+
+```bash
+mise run e2e -- --ui
+```
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

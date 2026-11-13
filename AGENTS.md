@@ -20,6 +20,8 @@ mise run dev                 # backend :8000 + frontend :5173 together
 mise run check               # contract + backend lint/test + frontend lint/build
 mise run api:generate        # TypeSpec → OpenAPI → TS-типы и Pydantic-модели
 mise run api:check           # упасть, если артефакты контракта устарели
+mise run e2e                 # браузерные E2E-тесты Playwright (поднимает оба сервера)
+mise run e2e:install         # поставить Chromium для Playwright (один раз)
 mise run backend:format      # ruff check --fix + ruff format
 mise tasks ls
 ```
@@ -27,6 +29,7 @@ mise tasks ls
 - Backend only: `mise run backend:dev`, `backend:migrate`, `backend:lint`, `backend:test`.
 - Frontend only: `mise run frontend:dev`, `frontend:lint`, `frontend:test`, `frontend:build`.
 - Frontend tests in watch mode: `mise run frontend:test:watch`.
+- Browser tests: `mise run e2e` runs Playwright in Chromium against the real FastAPI and Vite. They start their own servers on `127.0.0.1:8001`/`:5174` with a throwaway `backend/e2e.db` and a fixed clock (`FAKE_NOW`), and are **not** part of `mise run check` (they need a browser). Specs live in `frontend/e2e/**/*.e2e.ts` — the `.e2e.ts` suffix keeps Vitest away from them.
 - Single backend test: `cd backend && uv run pytest tests/test_health.py -k health`.
 - Frontend tests are Vitest + Testing Library on jsdom, colocated as `*.test.tsx`. `npm run lint` is **oxlint**, not ESLint. `npm run build` (`tsc -b && vite build`) is the only TypeScript typecheck — run it after TS changes.
 - `mise run check` runs its six tasks in parallel; one failure does not stop the others, but the run exits non-zero.
@@ -43,6 +46,7 @@ mise tasks ls
 - Backend style is enforced by `pyproject.toml`: ruff line length 99, `py313`, mypy `disallow_untyped_defs`. New backend code must be typed; run `mise run backend:format` before checking. The generated `app/schemas/contract.py` is excluded from ruff but still type-checked.
 - The DB is async SQLAlchemy + SQLite. `app/db/session.py` sets `PRAGMA foreign_keys=ON` and WAL; the DB file is `backend/app.db` (ignored). Alembic migrations live in `backend/migrations/` (`uv run alembic upgrade head`); they are excluded from ruff and mypy.
 - Read settings only through `app.core.config.get_settings()`. The service has one predefined owner from env and **no authentication by design** — don't add auth without asking.
+- `FAKE_NOW` (settings `fake_now`) freezes the backend clock; it exists for the Playwright suite only and must not be set in production.
 - Commit only `.env.example`. `backend/.env` and `frontend/.env.local` are gitignored and loaded by mise when present. Dev CORS allows `http://localhost:5173` / `127.0.0.1:5173`.
 - `.github/workflows/hexlet-check.yml` is auto-generated: never edit or rename it, and never rename the repository — Hexlet grading depends on it.
 - `.github/workflows/ci.yml` runs on every push: `mise run setup:ci` then `mise run check`. Keep `frontend/package-lock.json` committed or `npm ci` fails.

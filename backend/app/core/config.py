@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import lru_cache
 from typing import Annotated, Literal
 
@@ -17,6 +18,9 @@ class Settings(BaseSettings):
     app_name: str = "Call Scheduler"
     environment: Literal["local", "test", "production"] = "local"
     debug: bool = False
+
+    # Тестовый хук: E2E фиксирует «сейчас», иначе слоты зависят от дня недели.
+    fake_now: datetime | None = None
 
     database_url: str = "sqlite+aiosqlite:///./app.db"
 

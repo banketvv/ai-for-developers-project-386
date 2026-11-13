@@ -41,6 +41,8 @@ describe('BookingConfirmationPage', () => {
     expect(screen.getByText('понедельник, 16 ноября')).toBeInTheDocument()
     expect(screen.getByText(/09:00/)).toBeInTheDocument()
     expect(screen.getByText('60 минут')).toBeInTheDocument()
+    expect(screen.getByText('Гость')).toBeInTheDocument()
+    expect(screen.getByText('Иван')).toBeInTheDocument()
 
     const main = screen.getByRole('main')
     expect(

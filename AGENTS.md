@@ -2,10 +2,11 @@
 
 ## Repo map
 
-- `backend/` — FastAPI. ASGI entrypoint is `app.main:app`. Endpoints: `GET /health`, `/api/v1/session`, `/api/v1/meeting-types` (list, create, detail, update, delete), `/api/v1/meeting-types/{id}/slots`, `/api/v1/bookings` (list, create) and `/api/v1/bookings/{id}` (detail). Both tables (`meeting_types`, `bookings`) exist and are created by Alembic.
-- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, meeting-type list at `/booking`, type calendar at `/booking/{meetingTypeId}`, booking form at `/booking/{meetingTypeId}/{start}`, upcoming bookings at `/bookings`, booking confirmation at `/bookings/{bookingId}`, owner login at `/owner`, type creation form at `/owner/types/new`, type edit form at `/owner/types/{meetingTypeId}/edit`. API client in `src/lib/api.ts`, display formatting in `src/lib/datetime.ts`, network in tests is intercepted by MSW.
+- `backend/` — FastAPI. ASGI entrypoint is `app.main:app`. Endpoints: `GET /health`, `/api/v1/session`, `/api/v1/meeting-types` (list, create, detail, update, delete), `/api/v1/meeting-types/{id}/slots`, `/api/v1/bookings` (list, create) and `/api/v1/bookings/{id}` (detail). Both tables (`meeting_types`, `bookings`) exist and are created by Alembic. API models are generated from the contract into `app/schemas/contract.py`.
+- `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, meeting-type list at `/booking`, type calendar at `/booking/{meetingTypeId}`, booking form at `/booking/{meetingTypeId}/{start}`, upcoming bookings at `/bookings`, booking confirmation at `/bookings/{bookingId}`, owner login at `/owner`, type creation form at `/owner/types/new`, type edit form at `/owner/types/{meetingTypeId}/edit`. API client in `src/lib/api.ts`, generated types in `src/api/schema.d.ts`, display formatting in `src/lib/datetime.ts`, network in tests is intercepted by MSW.
+- `api/` — TypeSpec source of truth for the HTTP API, plus the generated `openapi/openapi.yaml`. `api/README.md` explains the pipeline and how to change it.
 - `mise.toml` at the root — tool versions and all dev tasks. Local workflow and CI both go through mise.
-- `backend/README.md` — backend setup and conventions. Root `README.md` is the Hexlet project template.
+- `backend/README.md` — backend setup and conventions. Root `README.md` is the Hexlet template.
 
 ## Commands
 
@@ -13,10 +14,12 @@ Run from the repo root unless noted.
 
 ```bash
 mise trust && mise install   # fresh clone only
-mise run setup               # uv sync + npm install (local)
+mise run setup               # uv sync + npm install (local, includes api/)
 mise run setup:ci            # uv sync + npm ci (lockfile-strict)
 mise run dev                 # backend :8000 + frontend :5173 together
-mise run check               # backend lint/test + frontend lint/build
+mise run check               # contract + backend lint/test + frontend lint/build
+mise run api:generate        # TypeSpec → OpenAPI → TS-типы и Pydantic-модели
+mise run api:check           # упасть, если артефакты контракта устарели
 mise run backend:format      # ruff check --fix + ruff format
 mise tasks ls
 ```
@@ -26,7 +29,8 @@ mise tasks ls
 - Frontend tests in watch mode: `mise run frontend:test:watch`.
 - Single backend test: `cd backend && uv run pytest tests/test_health.py -k health`.
 - Frontend tests are Vitest + Testing Library on jsdom, colocated as `*.test.tsx`. `npm run lint` is **oxlint**, not ESLint. `npm run build` (`tsc -b && vite build`) is the only TypeScript typecheck — run it after TS changes.
-- `mise run check` runs its five tasks in parallel; one failure does not stop the others, but the run exits non-zero.
+- `mise run check` runs its six tasks in parallel; one failure does not stop the others, but the run exits non-zero.
+- `api:check` regenerates the contract artifacts and fails when they differ from git — run `mise run api:generate` and commit the result after any `.tsp` change.
 
 ## Non-obvious constraints
 
@@ -35,7 +39,8 @@ mise tasks ls
 - **shadcn CLI 4.x** has no `--style`/`--base-color` on `init`. `frontend/components.json` deliberately uses legacy `"style": "new-york"`, `"baseColor": "zinc"`, CSS variables; the CLI maps new-york to the `new-york-v4` registry. Add components from `frontend/` with `npx shadcn@latest add <name>`; never hand-edit `src/components/ui/*`.
 - shadcn v4 components import `cn` from the `cn` package and primitives from `radix-ui` (not `@radix-ui/react-*`). `src/lib/utils.ts` re-exports `cn`.
 - Tailwind v4 is CSS-first: there is no `tailwind.config.js`. Theme tokens live as CSS variables in `src/index.css`.
-- Backend style is enforced by `pyproject.toml`: ruff line length 99, `py313`, mypy `disallow_untyped_defs`. New backend code must be typed; run `mise run backend:format` before checking.
+- **The API contract is the source of truth.** `api/*.tsp` (TypeSpec) describes every route and model; `api/openapi/openapi.yaml`, `frontend/src/api/schema.d.ts` and `backend/app/schemas/contract.py` are generated and committed. Never hand-edit generated files; change the `.tsp` and run `mise run api:generate`. `backend/tests/test_contract.py` fails when served routes, status codes, or request/response shapes drift from the OpenAPI file.
+- Backend style is enforced by `pyproject.toml`: ruff line length 99, `py313`, mypy `disallow_untyped_defs`. New backend code must be typed; run `mise run backend:format` before checking. The generated `app/schemas/contract.py` is excluded from ruff but still type-checked.
 - The DB is async SQLAlchemy + SQLite. `app/db/session.py` sets `PRAGMA foreign_keys=ON` and WAL; the DB file is `backend/app.db` (ignored). Alembic migrations live in `backend/migrations/` (`uv run alembic upgrade head`); they are excluded from ruff and mypy.
 - Read settings only through `app.core.config.get_settings()`. The service has one predefined owner from env and **no authentication by design** — don't add auth without asking.
 - Commit only `.env.example`. `backend/.env` and `frontend/.env.local` are gitignored and loaded by mise when present. Dev CORS allows `http://localhost:5173` / `127.0.0.1:5173`.

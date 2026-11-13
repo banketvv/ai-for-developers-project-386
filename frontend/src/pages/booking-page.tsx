@@ -3,13 +3,37 @@ import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { durationLabel, listMeetingTypes } from '@/lib/meeting-types'
 import type { MeetingTypeRead } from '@/lib/meeting-types'
-import { LOAD_ERROR, MEETING_TYPE_CREATED, RETRY_LABEL } from '@/lib/messages'
+import {
+  LOAD_ERROR,
+  MEETING_TYPE_CREATED,
+  MEETING_TYPE_DELETED,
+  MEETING_TYPE_SAVED,
+  RETRY_LABEL,
+} from '@/lib/messages'
 import { useSession } from '@/lib/session'
 
 type LoadStatus = 'loading' | 'ready' | 'error'
 
-type CreatedState = {
+type NoticeState = {
   created?: boolean
+  saved?: boolean
+  deleted?: boolean
+}
+
+function noticeText(state: NoticeState | null): string | null {
+  if (!state) {
+    return null
+  }
+  if (state.saved) {
+    return MEETING_TYPE_SAVED
+  }
+  if (state.deleted) {
+    return MEETING_TYPE_DELETED
+  }
+  if (state.created) {
+    return MEETING_TYPE_CREATED
+  }
+  return null
 }
 
 function BookingPage() {
@@ -17,7 +41,7 @@ function BookingPage() {
   const location = useLocation()
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [meetingTypes, setMeetingTypes] = useState<MeetingTypeRead[]>([])
-  const created = Boolean((location.state as CreatedState | null)?.created)
+  const notice = noticeText(location.state as NoticeState | null)
 
   const load = useCallback(async () => {
     setStatus('loading')
@@ -43,9 +67,9 @@ function BookingPage() {
           </Button>
         ) : null}
       </div>
-      {created ? (
+      {notice ? (
         <p role="status" className="mt-4 text-sm text-muted-foreground">
-          {MEETING_TYPE_CREATED}
+          {notice}
         </p>
       ) : null}
       <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -99,6 +123,17 @@ function BookingPage() {
                   )}
                 </article>
               </Link>
+              {isOwner ? (
+                <div className="mt-2">
+                  <Link
+                    to={`/owner/types/${meetingType.id}/edit`}
+                    aria-label={`Изменить ${meetingType.title}`}
+                    className="text-sm font-medium underline-offset-4 hover:underline"
+                  >
+                    Изменить
+                  </Link>
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>

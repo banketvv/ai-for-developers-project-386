@@ -56,6 +56,23 @@ origin/main`, never `git merge`. The one exception is `implement-spec`, whose ow
   is bringing `main` in before it marks the pull request ready (below). The squash of that pull
   request keeps `main` linear.
 
+## Releases
+
+Releases are automated by **release-please** (`.github/workflows/release-please.yml`). It parses
+Conventional Commits on `main` and keeps an open release PR that bumps `version.txt`, updates
+`CHANGELOG.md` and, once merged, creates the tag and GitHub Release.
+
+- The squash merge uses the **pull request title** as the commit subject, so the title must be a
+  Conventional Commit (`feat(api): …`, `fix: …`). `ci`, `chore`, `docs` and `test` do not bump the
+  version; `feat` bumps minor, `fix` patches, `feat!`/`fix!` or a `BREAKING CHANGE:` footer bumps
+  major.
+- GitHub appends `(#<PR>)` to the squash subject; release-please ignores it and links the PR in the
+  changelog. Tickets are closed by `Closes #N` in the PR body, not by the subject.
+- The first release starts at `0.1.0` (`initial-version` + `.release-please-manifest.json`), and
+  `bootstrap-sha` stops the changelog from walking the whole history.
+- The workflow needs **Settings → Actions → General → Allow GitHub Actions to create and approve
+  pull requests**. With the default `GITHUB_TOKEN`, CI does not run on the release PR itself.
+
 ## Agent skills
 
 ### Issue tracker

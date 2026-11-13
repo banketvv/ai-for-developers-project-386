@@ -54,7 +54,13 @@ depends = ["backend:dev", "frontend:dev"]
 [tasks."backend:dev"]
 description = "FastAPI с автоперезагрузкой"
 dir = "backend"
+depends = ["backend:migrate"]
 run = "uv run fastapi dev app/main.py"
+
+[tasks."backend:migrate"]
+description = "Применить миграции Alembic"
+dir = "backend"
+run = "uv run alembic upgrade head"
 
 [tasks."frontend:dev"]
 description = "Vite dev-сервер"

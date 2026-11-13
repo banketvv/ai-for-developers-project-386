@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.db.models import Booking
+from tests.support import create_meeting_type, owner_session
 
 # Будни окна «16 ноября + 13 дней»: 16–20 и 23–27 ноября 2026.
 WINDOW_WORKDAYS = (16, 17, 18, 19, 20, 23, 24, 25, 26, 27)
@@ -23,7 +24,7 @@ def test_empty_list_is_an_empty_array(client: TestClient) -> None:
 def test_owner_creates_meeting_type_and_sees_it_in_the_list(
     client: TestClient, settings: Settings
 ) -> None:
-    client.post("/api/v1/session", json={"email": settings.owner_email})
+    owner_session(client, settings)
 
     response = client.post(
         "/api/v1/meeting-types",
@@ -51,11 +52,7 @@ def test_owner_creates_meeting_type_and_sees_it_in_the_list(
 
 
 def test_detail_shows_one_meeting_type(client: TestClient, settings: Settings) -> None:
-    client.post("/api/v1/session", json={"email": settings.owner_email})
-    created = client.post(
-        "/api/v1/meeting-types",
-        json={"title": "Разбор", "duration_minutes": 45},
-    ).json()
+    created = create_meeting_type(client, settings, title="Разбор", duration_minutes=45)
 
     response = client.get(f"/api/v1/meeting-types/{created['id']}")
 
@@ -63,17 +60,20 @@ def test_detail_shows_one_meeting_type(client: TestClient, settings: Settings) -
     assert response.json() == created
 
 
-def test_unknown_meeting_type_is_not_found(client: TestClient) -> None:
-    response = client.get("/api/v1/meeting-types/999")
+@pytest.mark.parametrize(
+    "path",
+    ["/api/v1/meeting-types/999", "/api/v1/meeting-types/999/slots"],
+)
+def test_unknown_meeting_type_is_not_found(client: TestClient, path: str) -> None:
+    response = client.get(path)
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "not_found"
 
 
 def test_list_shows_newest_first(client: TestClient, settings: Settings) -> None:
-    client.post("/api/v1/session", json={"email": settings.owner_email})
-    client.post("/api/v1/meeting-types", json={"title": "Первый"})
-    client.post("/api/v1/meeting-types", json={"title": "Второй"})
+    create_meeting_type(client, settings, title="Первый")
+    create_meeting_type(client, settings, title="Второй")
 
     titles = [item["title"] for item in client.get("/api/v1/meeting-types").json()]
 
@@ -81,7 +81,7 @@ def test_list_shows_newest_first(client: TestClient, settings: Settings) -> None
 
 
 def test_blank_description_is_stored_without_it(client: TestClient, settings: Settings) -> None:
-    client.post("/api/v1/session", json={"email": settings.owner_email})
+    owner_session(client, settings)
 
     created = client.post(
         "/api/v1/meeting-types",
@@ -124,7 +124,7 @@ def test_cookie_of_another_email_cannot_create_meeting_type(
 def test_invalid_meeting_type_is_rejected_at_its_field(
     client: TestClient, settings: Settings, payload: dict[str, object], field: str
 ) -> None:
-    client.post("/api/v1/session", json={"email": settings.owner_email})
+    owner_session(client, settings)
 
     response = client.post("/api/v1/meeting-types", json=payload)
 
@@ -138,11 +138,7 @@ def test_invalid_meeting_type_is_rejected_at_its_field(
 def test_type_with_every_slot_taken_is_marked_without_free_slots(
     client: TestClient, settings: Settings, db: Session, now: datetime
 ) -> None:
-    client.post("/api/v1/session", json={"email": settings.owner_email})
-    busy_type = client.post(
-        "/api/v1/meeting-types",
-        json={"title": "Занятый день", "duration_minutes": 60},
-    ).json()
+    busy_type = create_meeting_type(client, settings, title="Занятый день", duration_minutes=60)
     for day in WINDOW_WORKDAYS:
         for hour in range(9, 18):
             db.add(
@@ -156,10 +152,7 @@ def test_type_with_every_slot_taken_is_marked_without_free_slots(
             )
     db.commit()
 
-    client.post(
-        "/api/v1/meeting-types",
-        json={"title": "Полчаса", "duration_minutes": 30},
-    )
+    create_meeting_type(client, settings, title="Полчаса", duration_minutes=30)
 
     listed = {item["title"]: item for item in client.get("/api/v1/meeting-types").json()}
 

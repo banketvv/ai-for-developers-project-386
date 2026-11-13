@@ -3,6 +3,8 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, field_serializer, field_validator
 
+from app.schemas.serializers import serialize_utc_moment
+
 GUEST_NAME_MAX_LENGTH = 100
 GUEST_EMAIL_MAX_LENGTH = 320
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -68,6 +70,4 @@ class BookingRead(BaseModel):
     @field_serializer("start")
     def serialize_start(self, value: datetime) -> str:
         """Отдаёт начало слота с суффиксом Z: клиенту не нужно угадывать смещение."""
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=UTC)
-        return value.astimezone(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+        return serialize_utc_moment(value)

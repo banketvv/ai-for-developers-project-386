@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.core.errors import AppError
+from app.core.errors import AppError, not_found
 from app.db.models import Booking, MeetingType
 from app.schemas.booking import BookingCreate, BookingMeetingTypeRead, BookingRead
 from app.services.meeting_types import upcoming_intervals
@@ -29,9 +29,9 @@ def to_read(booking: Booking, meeting_type: MeetingType) -> BookingRead:
     )
 
 
-def _not_found() -> AppError:
+def _booking_not_found() -> AppError:
     """Бронь, которую смотрящему нельзя показать, ничем не отличается от несуществующей."""
-    return AppError(code="not_found", message="Бронь не найдена", status_code=404)
+    return not_found("Бронь не найдена")
 
 
 def _is_slot_start(
@@ -58,7 +58,7 @@ async def create_booking(
     """Создаёт бронь по правилам: одна на тип, свободный слот, одна транзакция."""
     meeting_type = await session.get(MeetingType, payload.meeting_type_id)
     if meeting_type is None:
-        raise AppError(code="not_found", message="Тип встречи не найден", status_code=404)
+        raise not_found("Тип встречи не найден")
 
     if not _is_slot_start(
         payload.start,
@@ -151,8 +151,8 @@ async def get_booking(
     )
     booking = result.scalar_one_or_none()
     if booking is None:
-        raise _not_found()
+        raise _booking_not_found()
     is_own = viewer.email is not None and normalize_email(viewer.email) == booking.guest_email
     if not viewer.is_owner and not is_own:
-        raise _not_found()
+        raise _booking_not_found()
     return to_read(booking, booking.meeting_type)

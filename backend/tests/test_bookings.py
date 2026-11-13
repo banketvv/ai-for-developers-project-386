@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.db.models import Booking
+from tests.support import create_meeting_type as create_owner_meeting_type
 
 # Фиксированный момент — понедельник 12:00 по Москве, поэтому первый слот
 # окна для часового типа начинается в 13:00 по Москве, то есть в 10:00 UTC.
@@ -22,15 +23,12 @@ def create_meeting_type(
     title: str,
     duration_minutes: int,
 ) -> dict[str, object]:
-    """Заводит тип встречи от имени владельца и снимает владельческую cookie."""
-    client.post("/api/v1/session", json={"email": settings.owner_email})
-    response = client.post(
-        "/api/v1/meeting-types",
-        json={"title": title, "duration_minutes": duration_minutes},
+    """Заводит тип встречи и снимает владельческую cookie: дальше ходит гость."""
+    meeting_type = create_owner_meeting_type(
+        client, settings, title=title, duration_minutes=duration_minutes
     )
-    assert response.status_code == 201
     client.cookies.clear()
-    return response.json()
+    return meeting_type
 
 
 def booking_payload(meeting_type_id: object, **overrides: object) -> dict[str, object]:
@@ -73,7 +71,7 @@ def test_booking_is_created_and_sets_the_guest_cookie(
     assert client.get("/api/v1/session").json()["email"] == "guest@example.com"
 
 
-def test_unknown_meeting_type_is_not_found(client: TestClient) -> None:
+def test_booking_for_unknown_meeting_type_is_not_found(client: TestClient) -> None:
     response = client.post("/api/v1/bookings", json=booking_payload(999))
 
     assert response.status_code == 404

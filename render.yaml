@@ -1,0 +1,19 @@
+# Render Blueprint: деплой приложения из Dockerfile.
+# Render сам передаёт PORT — контейнер слушает его (CMD в Dockerfile).
+services:
+  - type: web
+    name: call-scheduler-hexlet
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: OWNER_NAME
+        value: Владелец календаря
+      - key: OWNER_EMAIL
+        value: owner@example.com
+      - key: OWNER_TIMEZONE
+        value: Europe/Moscow

@@ -6,6 +6,8 @@
 - `frontend/` — Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Landing page at `/`, meeting-type list at `/booking`, type calendar at `/booking/{meetingTypeId}`, booking form at `/booking/{meetingTypeId}/{start}`, upcoming bookings at `/bookings`, booking confirmation at `/bookings/{bookingId}`, owner login at `/owner`, type creation form at `/owner/types/new`, type edit form at `/owner/types/{meetingTypeId}/edit`. API client in `src/lib/api.ts`, generated types in `src/api/schema.d.ts`, display formatting in `src/lib/datetime.ts`, network in tests is intercepted by MSW.
 - `api/` — TypeSpec source of truth for the HTTP API, plus the generated `openapi/openapi.yaml`. `api/README.md` explains the pipeline and how to change it.
 - `mise.toml` at the root — tool versions and all dev tasks. Local workflow and CI both go through mise.
+- `Dockerfile` and `render.yaml` — multi-stage image (Vite + FastAPI) and Render Blueprint. The container applies migrations, serves the built frontend from FastAPI and listens on `PORT`; Render sets that variable.
+- `opencode.json` — project OpenCode config; connects the hosted Render MCP server (`https://mcp.render.com/mcp`) for deploys and logs.
 - `backend/README.md` — backend setup and conventions. Root `README.md` is the Hexlet template.
 
 ## Commands

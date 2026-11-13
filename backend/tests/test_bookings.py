@@ -268,6 +268,109 @@ def test_two_concurrent_requests_for_one_slot_give_one_booking(
     assert created["start"] == FIRST_SLOT
 
 
+def test_guest_without_cookie_gets_an_empty_list(client: TestClient, settings: Settings) -> None:
+    meeting_type = create_meeting_type(client, settings, title="Час", duration_minutes=60)
+    created = client.post("/api/v1/bookings", json=booking_payload(meeting_type["id"]))
+    assert created.status_code == 201
+
+    client.cookies.clear()
+    response = client.get("/api/v1/bookings")
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_guest_list_has_only_their_upcoming_bookings_in_start_order(
+    client: TestClient, settings: Settings, db: Session
+) -> None:
+    first_type = create_meeting_type(client, settings, title="Первый", duration_minutes=60)
+    second_type = create_meeting_type(client, settings, title="Второй", duration_minutes=60)
+    # Более позднюю бронь создаём первой: порядок задаёт время начала, а не вставка.
+    later = client.post(
+        "/api/v1/bookings",
+        json=booking_payload(
+            second_type["id"], start="2026-11-16T11:00:00Z", guest_email="Guest@Example.COM"
+        ),
+    ).json()
+    earlier = client.post("/api/v1/bookings", json=booking_payload(first_type["id"])).json()
+    # Прошедшая, текущая и чужая брони не попадают в список гостя.
+    db.add_all(
+        [
+            Booking(
+                meeting_type_id=first_type["id"],
+                guest_name="Гость",
+                guest_email="guest@example.com",
+                start=datetime(2026, 11, 16, 8, 0),
+                created_at=datetime(2026, 11, 15, 9, 0),
+            ),
+            Booking(
+                meeting_type_id=first_type["id"],
+                guest_name="Гость",
+                guest_email="guest@example.com",
+                start=datetime(2026, 11, 16, 9, 0),
+                created_at=datetime(2026, 11, 15, 9, 0),
+            ),
+            Booking(
+                meeting_type_id=second_type["id"],
+                guest_name="Другой",
+                guest_email="other@example.com",
+                start=datetime(2026, 11, 16, 13, 0),
+                created_at=datetime(2026, 11, 15, 9, 0),
+            ),
+        ]
+    )
+    db.commit()
+    client.cookies.clear()
+    client.cookies.set(settings.session_cookie_name, "Guest@Example.COM")
+
+    response = client.get("/api/v1/bookings")
+
+    assert response.status_code == 200
+    assert [booking["id"] for booking in response.json()] == [earlier["id"], later["id"]]
+    assert [booking["start"] for booking in response.json()] == [
+        "2026-11-16T10:00:00Z",
+        "2026-11-16T11:00:00Z",
+    ]
+
+
+def test_owner_list_has_every_booking_with_guest_contacts(
+    client: TestClient, settings: Settings
+) -> None:
+    meeting_type = create_meeting_type(client, settings, title="Час", duration_minutes=60)
+    client.post(
+        "/api/v1/bookings",
+        json=booking_payload(
+            meeting_type["id"],
+            start="2026-11-16T10:00:00Z",
+            guest_name="Иван",
+            guest_email="ivan@example.com",
+        ),
+    )
+    client.post(
+        "/api/v1/bookings",
+        json=booking_payload(
+            meeting_type["id"],
+            start="2026-11-16T11:00:00Z",
+            guest_name="Мария",
+            guest_email="maria@example.com",
+        ),
+    )
+    client.cookies.clear()
+    client.post("/api/v1/session", json={"email": settings.owner_email})
+
+    response = client.get("/api/v1/bookings")
+
+    assert response.status_code == 200
+    assert [(b["guest_name"], b["guest_email"]) for b in response.json()] == [
+        ("Иван", "ivan@example.com"),
+        ("Мария", "maria@example.com"),
+    ]
+    assert [b["start"] for b in response.json()] == [
+        "2026-11-16T10:00:00Z",
+        "2026-11-16T11:00:00Z",
+    ]
+
+
 def test_guest_reads_only_their_own_booking(client: TestClient, settings: Settings) -> None:
     meeting_type = create_meeting_type(client, settings, title="Час", duration_minutes=60)
     created = client.post("/api/v1/bookings", json=booking_payload(meeting_type["id"])).json()

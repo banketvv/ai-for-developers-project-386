@@ -115,6 +115,30 @@ async def create_booking(
     return to_read(booking, meeting_type)
 
 
+async def list_bookings(
+    session: AsyncSession,
+    *,
+    viewer: Viewer,
+    now: datetime,
+) -> list[BookingRead]:
+    """Предстоящие брони: гость видит свои, владелец — все; без cookie список пуст."""
+    query = (
+        select(Booking)
+        .options(joinedload(Booking.meeting_type))
+        .where(Booking.start > now)
+        .order_by(Booking.start, Booking.id)
+    )
+    if viewer.is_owner:
+        result = await session.execute(query)
+    elif viewer.email is not None:
+        result = await session.execute(
+            query.where(Booking.guest_email == normalize_email(viewer.email))
+        )
+    else:
+        return []
+    return [to_read(booking, booking.meeting_type) for booking in result.scalars()]
+
+
 async def get_booking(
     session: AsyncSession,
     booking_id: int,

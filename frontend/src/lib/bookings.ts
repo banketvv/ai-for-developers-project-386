@@ -31,6 +31,10 @@ export function createBooking(input: BookingCreate): Promise<BookingRead> {
   })
 }
 
+export function listBookings(): Promise<BookingRead[]> {
+  return apiRequest<BookingRead[]>(BOOKINGS_PATH)
+}
+
 export function getBooking(bookingId: number): Promise<BookingRead> {
   return apiRequest<BookingRead>(`${BOOKINGS_PATH}/${bookingId}`)
 }

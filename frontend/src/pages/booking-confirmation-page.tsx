@@ -106,6 +106,10 @@ function BookingConfirmationPage() {
           </dd>
         </div>
         <div className="flex justify-between gap-4">
+          <dt className="text-muted-foreground">Гость</dt>
+          <dd className="text-right font-medium">{booking.guest_name}</dd>
+        </div>
+        <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Длительность</dt>
           <dd className="text-right font-medium">
             {durationLabel(booking.meeting_type.duration_minutes)}

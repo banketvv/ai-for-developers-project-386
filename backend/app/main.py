@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.routes.health import router as health_router
+from app.api.v1.routes.meeting_types import router as meeting_types_router
 from app.api.v1.routes.session import router as session_router
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(session_router)
+    app.include_router(meeting_types_router)
     install_error_handlers(app)
 
     return app

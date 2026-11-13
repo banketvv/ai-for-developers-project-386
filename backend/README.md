@@ -51,7 +51,9 @@ Copy-Item .env.example .env
 | `DATABASE_URL` | `sqlite+aiosqlite:///./app.db` | Подключение к БД |
 | `OWNER_NAME` | `Owner` | Имя владельца календаря |
 | `OWNER_EMAIL` | `owner@example.com` | Email владельца |
-| `OWNER_TIMEZONE` | `UTC` | Часовой пояс владельца, например `Europe/Moscow` |
+| `OWNER_TIMEZONE` | `Europe/Moscow` | Часовой пояс владельца, например `Europe/Moscow` |
+| `SESSION_COOKIE_NAME` | `guest_email` | Имя cookie, которой сервис опознаёт смотрящего |
+| `SESSION_COOKIE_MAX_AGE` | `2592000` | Срок жизни cookie в секундах (30 дней) |
 | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Origin'ы фронтенда через запятую |
 
 ## Запуск
@@ -78,6 +80,16 @@ curl http://127.0.0.1:8000/health
 uv run fastapi run app/main.py
 ```
 
+## Сессия
+
+Сервис не аутентифицирует, а опознаёт смотрящего по cookie с почтой:
+
+- `GET /api/v1/session` — `{"email", "is_owner", "owner_name"}`: кто смотрит и владелец ли он;
+- `POST /api/v1/session` с `{"email": "..."}` — ставит cookie, если почта совпадает с `OWNER_EMAIL` (без учёта регистра и пробелов), иначе `403` в общем конверте ошибок;
+- `DELETE /api/v1/session` — очищает cookie.
+
+Cookie `HttpOnly`, `SameSite=Lax`, срок 30 дней, `Secure` вне `local` и `test`. Ошибки API отдаются конвертом `{"error": {"code", "message", "fields"}}`.
+
 ## Структура
 
 ```
@@ -87,18 +99,26 @@ backend/
 ├── pyproject.toml
 ├── uv.lock
 ├── app/
-│   ├── main.py              # create_app(), CORS, lifespan
+│   ├── main.py              # create_app(), CORS, lifespan, обработчики ошибок
 │   ├── api/
+│   │   ├── deps.py          # зависимости: смотрящий, настройки
 │   │   └── v1/
 │   │       └── routes/
-│   │           └── health.py
+│   │           ├── health.py
+│   │           └── session.py
 │   ├── core/
-│   │   └── config.py        # Settings из env/.env
-│   └── db/
-│       ├── base.py          # DeclarativeBase и naming_convention
-│       └── session.py       # async engine, SessionFactory, get_session
+│   │   ├── clock.py         # текущий момент и зависимость get_now
+│   │   ├── config.py        # Settings из env/.env
+│   │   └── errors.py        # AppError и единый конверт ошибок
+│   ├── db/
+│   │   ├── base.py          # DeclarativeBase и naming_convention
+│   │   └── session.py       # async engine, SessionFactory, get_session
+│   ├── schemas/             # Pydantic-схемы API
+│   └── services/            # правила домена (сессия)
 └── tests/
-    └── test_health.py
+    ├── conftest.py          # приложение с подменёнными настройками и часами
+    ├── test_health.py
+    └── test_session.py
 ```
 
 Соглашения:
@@ -149,10 +169,11 @@ uv run mypy app tests
 - каркас приложения FastAPI с фабрикой `create_app()`;
 - конфигурация через `.env`;
 - слой БД (async engine и сессии SQLite);
-- `GET /health` и тест на него.
+- `GET /health` и тест на него;
+- опознание смотрящего по cookie: вход владельца и смена почты (`/api/v1/session`).
 
 В планах:
 
-- модели `Event`, `Slot`, `Booking` и миграции Alembic;
-- API `/api/v1/events`, `/api/v1/slots`, `/api/v1/bookings`;
+- модели `MeetingType` и `Booking` и миграции Alembic;
+- API `/api/v1/meeting-types`, `/api/v1/meeting-types/{id}/slots`, `/api/v1/bookings`;
 - защита от двойного бронирования слота (уникальный индекс + `409 Conflict`).

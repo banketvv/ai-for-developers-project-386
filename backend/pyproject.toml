@@ -13,6 +13,7 @@ dependencies = [
     "fastapi[standard]>=0.162.4",
     "pydantic-settings>=2.4",
     "sqlalchemy[asyncio]>=2.0",
+    "tzdata>=2024.1",
 ]
 
 [dependency-groups]
@@ -50,6 +51,9 @@ select = [
     "ASYNC",  # flake8-async
     "RUF",    # ruff-specific rules
 ]
+# Русский текст в докстрингах и сообщениях API: кириллические буквы, похожие
+# на латинские, — не ошибка, а нормальный алфавит.
+ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

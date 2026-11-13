@@ -22,7 +22,11 @@ class Settings(BaseSettings):
 
     owner_name: str = "Owner"
     owner_email: str = "owner@example.com"
-    owner_timezone: str = "UTC"
+    owner_timezone: str = "Europe/Moscow"
+
+    # Cookie, которой сервис опознаёт смотрящего: почта гостя или владельца.
+    session_cookie_name: str = "guest_email"
+    session_cookie_max_age: int = 60 * 60 * 24 * 30
 
     cors_origins: Annotated[list[str], NoDecode] = [
         "http://localhost:5173",

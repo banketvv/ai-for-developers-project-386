@@ -32,6 +32,16 @@ function SiteHeader() {
           ))}
         </nav>
       </div>
+      <div className="border-t border-border/60">
+        <div className="mx-auto flex w-full max-w-6xl justify-end px-6 py-1">
+          <Link
+            to="/owner"
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Вход владельца
+          </Link>
+        </div>
+      </div>
     </header>
   )
 }

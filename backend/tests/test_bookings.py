@@ -56,7 +56,7 @@ def test_booking_is_created_and_sets_the_guest_cookie(
     assert body["start"] == FIRST_SLOT
     assert body["guest_name"] == "Гость"
     assert body["guest_email"] == "guest@example.com"
-    assert body["created_at"] == "2026-11-16T09:00:00"
+    assert body["created_at"] == "2026-11-16T09:00:00Z"
     assert body["meeting_type"] == {
         "id": meeting_type["id"],
         "title": "Консультация",

@@ -1,3 +1,6 @@
+import createClient from 'openapi-fetch'
+import type { paths } from '@/api/schema'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 type ErrorEnvelope = {
@@ -8,10 +11,10 @@ type ErrorEnvelope = {
   }
 }
 
-type RequestOptions = {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
-  body?: unknown
-  signal?: AbortSignal
+type ApiResult<T> = {
+  data?: T
+  error?: unknown
+  response: Response
 }
 
 export class ApiError extends Error {
@@ -37,49 +40,41 @@ export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`
 }
 
-async function readJson<T>(response: Response): Promise<T | null> {
-  const text = await response.text()
-  if (!text) {
-    return null
-  }
-  try {
-    return JSON.parse(text) as T
-  } catch {
-    return null
-  }
-}
+/**
+ * Типизированный клиент, собранный из OpenAPI-контракта: пути, тела и ответы
+ * проверяет компилятор. Cookie отправляется всегда: сервис узнаёт смотрящего
+ * только по ней.
+ */
+export const apiClient = createClient<paths>({
+  baseUrl: API_BASE_URL,
+  credentials: 'include',
+  // Стрелка зовёт текущий `fetch` в момент запроса: так MSW перехватывает сеть,
+  // даже если клиент создан до старта тестового сервера.
+  fetch: (request) => fetch(request),
+})
 
-export async function apiRequest<T>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<T> {
-  let response: Response
+/**
+ * Приводит ответ клиента к данным или к `ApiError` с машинным кодом.
+ * Сеть и 5xx остаются разными состояниями для интерфейса.
+ */
+export async function unwrap<T>(request: Promise<ApiResult<T>>): Promise<T> {
+  let result: ApiResult<T>
   try {
-    const headers: Record<string, string> = {}
-    if (options.body !== undefined) {
-      headers['Content-Type'] = 'application/json'
-    }
-    response = await fetch(apiUrl(path), {
-      method: options.method ?? 'GET',
-      credentials: 'include',
-      headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
-      signal: options.signal,
-    })
+    result = await request
   } catch {
     throw new ApiError(0, 'network_error', 'Не удалось связаться с сервером')
   }
 
-  if (!response.ok) {
-    const envelope = await readJson<ErrorEnvelope>(response)
+  if (!result.response.ok) {
+    const envelope = result.error as ErrorEnvelope | undefined
     const error = envelope?.error
     throw new ApiError(
-      response.status,
+      result.response.status,
       error?.code ?? 'unknown_error',
       error?.message ?? 'Сервер ответил ошибкой',
       error?.fields ?? {},
     )
   }
 
-  return (await readJson<T>(response)) as T
+  return result.data as T
 }

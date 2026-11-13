@@ -1,0 +1,20 @@
+{
+  "name": "api-contract",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "TypeSpec-контракт API «Календаря звонков»",
+  "scripts": {
+    "compile": "tsp compile .",
+    "generate": "node scripts/generate.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "^1.18.0",
+    "@typespec/http": "^1.18.0",
+    "@typespec/openapi": "^1.18.0",
+    "@typespec/openapi3": "^1.18.0",
+    "openapi-typescript": "^7.13.0",
+    "yaml": "^2.9.1"
+  }
+}

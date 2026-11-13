@@ -1,11 +1,17 @@
 from datetime import datetime, timedelta
+from typing import cast
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError, not_found
 from app.db.models import Booking, MeetingType
-from app.schemas.meeting_type import MeetingTypeCreate, MeetingTypeRead, MeetingTypeUpdate
+from app.schemas.meeting_type import (
+    DurationMinutes,
+    MeetingTypeCreate,
+    MeetingTypeRead,
+    MeetingTypeUpdate,
+)
 from app.schemas.slot import SlotRead, SlotsRead
 from app.services.slots import Interval, has_available_slot, slot_grid
 
@@ -40,7 +46,7 @@ def to_read(
         id=meeting_type.id,
         title=meeting_type.title,
         description=meeting_type.description,
-        duration_minutes=meeting_type.duration_minutes,
+        duration_minutes=cast(DurationMinutes, meeting_type.duration_minutes),
         created_at=meeting_type.created_at,
         bookings_count=bookings_count,
         has_available_slots=has_available_slots,

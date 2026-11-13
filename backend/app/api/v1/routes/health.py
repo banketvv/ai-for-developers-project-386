@@ -5,7 +5,7 @@ router = APIRouter(tags=["health"])
 
 
 class HealthResponse(BaseModel):
-    status: str = "ok"
+    status: str
 
 
 @router.get(
@@ -15,4 +15,4 @@ class HealthResponse(BaseModel):
     summary="Проверка работоспособности сервиса",
 )
 async def health() -> HealthResponse:
-    return HealthResponse()
+    return HealthResponse(status="ok")

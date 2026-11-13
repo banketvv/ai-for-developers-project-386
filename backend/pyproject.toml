@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "aiosqlite>=0.20",
     "alembic>=1.13",
+    "email-validator>=2.3.0",
     "fastapi[standard]>=0.162.4",
     "pydantic-settings>=2.4",
     "sqlalchemy[asyncio]>=2.0",
@@ -23,6 +24,10 @@ dev = [
     "httpx>=0.28",
     "ruff>=0.9",
     "mypy>=1.14",
+    "datamodel-code-generator>=0.95.0",
+    "pyyaml>=6.0.3",
+    "openapi-spec-validator>=0.9.0",
+    "types-pyyaml>=6.0.12.20261113",
 ]
 
 [build-system]
@@ -36,7 +41,7 @@ module-root = ""
 [tool.ruff]
 target-version = "py313"
 line-length = 99
-extend-exclude = ["migrations"]
+extend-exclude = ["migrations", "app/schemas/contract.py"]
 
 [tool.ruff.lint]
 select = [

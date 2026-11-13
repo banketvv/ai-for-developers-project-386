@@ -1,40 +1,23 @@
-import { apiRequest } from '@/lib/api'
+import type { components } from '@/api/schema'
+import { apiClient, unwrap } from '@/lib/api'
 
-export type BookingMeetingType = {
-  id: number
-  title: string
-  duration_minutes: number
-}
-
-export type BookingRead = {
-  id: number
-  start: string
-  guest_name: string
-  guest_email: string
-  created_at: string
-  meeting_type: BookingMeetingType
-}
-
-export type BookingCreate = {
-  meeting_type_id: number
-  start: string
-  guest_name: string
-  guest_email: string
-}
-
-const BOOKINGS_PATH = '/api/v1/bookings'
+// Типы взяты из OpenAPI-контракта: ручные копии разъезжались бы с сервером.
+export type BookingRead = components['schemas']['BookingRead']
+export type BookingCreate = components['schemas']['BookingCreate']
+export type BookingMeetingType = components['schemas']['BookingMeetingTypeRead']
 
 export function createBooking(input: BookingCreate): Promise<BookingRead> {
-  return apiRequest<BookingRead>(BOOKINGS_PATH, {
-    method: 'POST',
-    body: input,
-  })
+  return unwrap(apiClient.POST('/api/v1/bookings', { body: input }))
 }
 
 export function listBookings(): Promise<BookingRead[]> {
-  return apiRequest<BookingRead[]>(BOOKINGS_PATH)
+  return unwrap(apiClient.GET('/api/v1/bookings'))
 }
 
 export function getBooking(bookingId: number): Promise<BookingRead> {
-  return apiRequest<BookingRead>(`${BOOKINGS_PATH}/${bookingId}`)
+  return unwrap(
+    apiClient.GET('/api/v1/bookings/{booking_id}', {
+      params: { path: { booking_id: bookingId } },
+    }),
+  )
 }

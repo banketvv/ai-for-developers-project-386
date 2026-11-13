@@ -10,7 +10,7 @@ import {
   getMeetingType,
   updateMeetingType,
 } from '@/lib/meeting-types'
-import type { MeetingTypeRead } from '@/lib/meeting-types'
+import type { DurationMinutes, MeetingTypeRead } from '@/lib/meeting-types'
 import {
   DURATION_LOCKED,
   LOAD_ERROR,
@@ -116,7 +116,7 @@ function MeetingTypeEditPage() {
       await updateMeetingType(meetingTypeId, {
         title: title.trim(),
         description: description.trim() || null,
-        duration_minutes: Number(duration),
+        duration_minutes: Number(duration) as DurationMinutes,
       })
       navigate('/booking', { state: { saved: true } })
     } catch (caught) {

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Response
 
 from app.api.cookies import set_session_cookie
 from app.api.deps import NowDep, SessionDep, SettingsDep, ViewerDep
+from app.api.responses import error_responses
 from app.schemas.booking import BookingCreate, BookingRead
 from app.services.bookings import create_booking as create_booking_service
 from app.services.bookings import get_booking as get_booking_service
@@ -10,7 +11,9 @@ from app.services.bookings import list_bookings as list_bookings_service
 router = APIRouter(prefix="/api/v1/bookings", tags=["bookings"])
 
 
-@router.post("", response_model=BookingRead, status_code=201)
+@router.post(
+    "", response_model=BookingRead, status_code=201, responses=error_responses(404, 409, 422)
+)
 async def create_booking(
     payload: BookingCreate,
     response: Response,
@@ -39,7 +42,7 @@ async def list_bookings(
     return await list_bookings_service(session, viewer=viewer, now=now)
 
 
-@router.get("/{booking_id}", response_model=BookingRead)
+@router.get("/{booking_id}", response_model=BookingRead, responses=error_responses(404, 422))
 async def read_booking(
     booking_id: int,
     session: SessionDep,

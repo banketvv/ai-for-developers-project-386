@@ -1,10 +1,9 @@
-import { apiRequest } from '@/lib/api'
+import type { components } from '@/api/schema'
+import { apiClient, unwrap } from '@/lib/api'
 import { localDayKey } from '@/lib/datetime'
 
-export type SlotRead = {
-  start: string
-  available: boolean
-}
+// Тип слота взят из OpenAPI-контракта: ручные копии разъезжались бы с сервером.
+export type SlotRead = components['schemas']['SlotRead']
 
 export type SlotDay = {
   key: string
@@ -13,8 +12,10 @@ export type SlotDay = {
 }
 
 export function listSlots(meetingTypeId: number): Promise<SlotRead[]> {
-  return apiRequest<{ slots: SlotRead[] }>(
-    `/api/v1/meeting-types/${meetingTypeId}/slots`,
+  return unwrap(
+    apiClient.GET('/api/v1/meeting-types/{meeting_type_id}/slots', {
+      params: { path: { meeting_type_id: meetingTypeId } },
+    }),
   ).then((response) => response.slots)
 }
 

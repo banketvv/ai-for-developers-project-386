@@ -23,6 +23,26 @@ class AppError(Exception):
         self.fields = fields or {}
 
 
+# Human-readable подписи полей: сообщения Pydantic не должны протекать в интерфейс.
+_FIELD_LABELS = {
+    "title": "Название",
+    "description": "Описание",
+    "guest_name": "Имя",
+    "guest_email": "Почта",
+    "email": "Почта",
+    "start": "Время",
+    "duration_minutes": "Длительность",
+    "meeting_type_id": "Тип встречи",
+}
+_EMPTY_FIELD_MESSAGES = {
+    "title": "Название не может быть пустым",
+    "guest_name": "Имя не может быть пустым",
+    "guest_email": "Почта не может быть пустой",
+    "email": "Почта не может быть пустой",
+}
+_EMAIL_FIELDS = {"email", "guest_email"}
+
+
 def not_found(message: str) -> AppError:
     """Единый 404 на любой неизвестный ресурс: код и статус заданы здесь."""
     return AppError(code="not_found", message=message, status_code=404)
@@ -41,6 +61,28 @@ def error_response(
     )
 
 
+def _message_for(field: str, error: dict[str, Any]) -> str:
+    """Переводит машинную ошибку Pydantic в сообщение для поля формы."""
+    label = _FIELD_LABELS.get(field, field)
+    kind = str(error.get("type", ""))
+    context = error.get("ctx") or {}
+    if kind == "missing":
+        return "Обязательное поле"
+    if kind == "string_too_short":
+        return _EMPTY_FIELD_MESSAGES.get(field, f"{label} не может быть пустым")
+    if kind == "string_too_long":
+        return f"{label} не длиннее {context.get('max_length')} символов"
+    if kind == "literal_error":
+        return "Недопустимое значение"
+    if kind.startswith("datetime_"):
+        return "Некорректная дата и время"
+    if field in _EMAIL_FIELDS:
+        if not error.get("input"):
+            return _EMPTY_FIELD_MESSAGES[field]
+        return "Введите корректный email"
+    return str(error.get("msg", "")).removeprefix("Value error, ")
+
+
 def _validation_fields(errors: Sequence[Any]) -> dict[str, str]:
     fields: dict[str, str] = {}
     for error in errors:
@@ -48,9 +90,8 @@ def _validation_fields(errors: Sequence[Any]) -> dict[str, str]:
             str(part) for part in error.get("loc", ()) if part not in ("body", "query", "path")
         ]
         if location:
-            message = str(error.get("msg", ""))
-            # Pydantic добавляет служебный префикс: клиенту показывается только текст.
-            fields[".".join(location)] = message.removeprefix("Value error, ")
+            field = ".".join(location)
+            fields[field] = _message_for(field, error)
     return fields
 
 

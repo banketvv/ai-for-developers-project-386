@@ -11,6 +11,17 @@ This template provides a minimal setup to get React working in Vite with HMR and
 cp .env.example .env.local
 ```
 
+## Клиент API
+
+Клиент не пишется руками: типы путей и схем генерируются из OpenAPI-контракта в
+`src/api/schema.d.ts`, а `src/lib/api.ts` собирает на них типизированный клиент
+(`openapi-fetch`). Сгенерированный файл не правится — после изменения `api/*.tsp`
+в корне репозитория выполните `mise run api:generate`.
+
+Модули `src/lib/meeting-types.ts`, `bookings.ts`, `slots.ts` и `session.tsx` — тонкие
+обёртки над клиентом: они возвращают данные или бросают `ApiError` с машинным кодом.
+Подробнее о конвейере — `api/README.md`.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

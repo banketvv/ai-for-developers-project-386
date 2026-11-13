@@ -1,0 +1,589 @@
+openapi: 3.1.0
+info:
+  title: Call Scheduler API
+  description: |-
+    HTTP API сервиса «Календарь звонков»: один владелец публикует типы встреч,
+    гости записываются на слоты. Аутентификации нет: смотрящего опознаёт cookie
+    `guest_email`, которую сервис ставит после брони или входа владельца.
+  version: 0.0.0
+tags:
+  - name: health
+  - name: session
+  - name: meeting-types
+  - name: bookings
+paths:
+  /api/v1/bookings:
+    get:
+      operationId: BookingRoutes_list
+      summary: "Предстоящие встречи: свои для гостя, все для владельца"
+      parameters: []
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookingRead"
+      tags:
+        - bookings
+    post:
+      operationId: BookingRoutes_create
+      summary: Забронировать слот
+      parameters: []
+      responses:
+        "201":
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingRead"
+        "404":
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: The request conflicts with the current state of the server.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags:
+        - bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingCreate"
+  /api/v1/bookings/{booking_id}:
+    get:
+      operationId: BookingRoutes_read
+      summary: Бронь по номеру
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingRead"
+        "404":
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags:
+        - bookings
+  /api/v1/meeting-types:
+    get:
+      operationId: MeetingTypeRoutes_list
+      summary: Список типов встреч, новые сверху
+      parameters: []
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MeetingTypeRead"
+      tags:
+        - meeting-types
+    post:
+      operationId: MeetingTypeRoutes_create
+      summary: Создать тип встречи
+      parameters: []
+      responses:
+        "201":
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingTypeRead"
+        "403":
+          description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags:
+        - meeting-types
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingTypeCreate"
+  /api/v1/meeting-types/{meeting_type_id}:
+    get:
+      operationId: MeetingTypeRoutes_read
+      summary: Один тип встречи
+      parameters:
+        - name: meeting_type_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingTypeRead"
+        "404":
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags:
+        - meeting-types
+    patch:
+      operationId: MeetingTypeRoutes_update
+      summary: Править тип встречи
+      parameters:
+        - name: meeting_type_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingTypeRead"
+        "403":
+          description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: The request conflicts with the current state of the server.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags:
+        - meeting-types
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingTypeUpdate"
+    delete:
+      operationId: MeetingTypeRoutes_remove
+      summary: Удалить тип встречи вместе с его бронями
+      parameters:
+        - name: meeting_type_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "There is no content to send for this request, but the headers may be useful. "
+        "403":
+          description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags:
+        - meeting-types
+  /api/v1/meeting-types/{meeting_type_id}/slots:
+    get:
+      operationId: MeetingTypeRoutes_slots
+      summary: Все слоты 14-дневного окна, включая занятые
+      parameters:
+        - name: meeting_type_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotsRead"
+        "404":
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags:
+        - meeting-types
+  /api/v1/session:
+    get:
+      operationId: SessionRoutes_read
+      summary: Кто смотрит сервис и владелец ли он
+      parameters: []
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionRead"
+      tags:
+        - session
+    post:
+      operationId: SessionRoutes_login
+      summary: Вход владельца по почте
+      parameters: []
+      responses:
+        "204":
+          description: "There is no content to send for this request, but the headers may be useful. "
+        "403":
+          description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags:
+        - session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionLogin"
+    delete:
+      operationId: SessionRoutes_logout
+      summary: "Сменить почту: очистить cookie"
+      parameters: []
+      responses:
+        "204":
+          description: "There is no content to send for this request, but the headers may be useful. "
+      tags:
+        - session
+  /health:
+    get:
+      operationId: health
+      summary: Проверка работоспособности сервиса
+      description: |-
+        Инфраструктурная проверка живости сервиса. Живёт в корне, вне `/api/v1`,
+        потому что внешний мониторинг и Hexlet-проверка смотрят именно на неё.
+      parameters: []
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthRead"
+      tags:
+        - health
+components:
+  schemas:
+    ApiError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: "Машинный код: `validation_error`, `forbidden`, `not_found`, `slot_taken`, `already_booked`, `duration_locked`."
+        message:
+          type: string
+          description: Человекочитаемое сообщение для показа рядом с формой или экраном.
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+          description: "Ошибки конкретных полей: имя поля → сообщение."
+      description: "Единый конверт ошибки: клиент различает причины по машинному коду."
+    BookingCreate:
+      type: object
+      required:
+        - meeting_type_id
+        - start
+        - guest_name
+        - guest_email
+      properties:
+        meeting_type_id:
+          type: integer
+        start:
+          type: string
+          format: date-time
+          description: "Начало слота: обязан совпадать со слотом текущей сетки типа."
+        guest_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Имя гостя, 1–100 символов после обрезки.
+        guest_email:
+          type: string
+          maxLength: 320
+          format: email
+          description: "Почта гостя: сравнивается с точностью до нормализации (обрезка, нижний регистр)."
+    BookingMeetingTypeRead:
+      type: object
+      required:
+        - id
+        - title
+        - duration_minutes
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        duration_minutes:
+          $ref: "#/components/schemas/DurationMinutes"
+    BookingRead:
+      type: object
+      required:
+        - id
+        - start
+        - guest_name
+        - guest_email
+        - created_at
+        - meeting_type
+      properties:
+        id:
+          type: integer
+          description: Номер брони, который гость видит на подтверждении.
+        start:
+          type: string
+          format: date-time
+          description: Начало слота в UTC с суффиксом `Z`.
+        guest_name:
+          type: string
+        guest_email:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        meeting_type:
+          $ref: "#/components/schemas/BookingMeetingTypeRead"
+    DurationMinutes:
+      type: integer
+      enum:
+        - 15
+        - 30
+        - 45
+        - 60
+      description: "Длительность встречи в минутах: владелец выбирает из набора."
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: "#/components/schemas/ApiError"
+      description: Тело любого неуспешного ответа API.
+    HealthRead:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Всегда `ok`, пока сервис отвечает.
+    MeetingTypeCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Название, 1–100 символов после обрезки.
+        description:
+          anyOf:
+            - type: string
+            - type: "null"
+          maxLength: 1000
+          description: Необязательное описание до 1000 символов; пустая строка означает «без описания».
+        duration_minutes:
+          $ref: "#/components/schemas/DurationMinutes"
+          default: 30
+    MeetingTypeRead:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - duration_minutes
+        - created_at
+        - bookings_count
+        - has_available_slots
+        - duration_locked
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          description: Название типа встречи, 1–100 символов после обрезки.
+        description:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Описание до 1000 символов; `null`, если владелец его не задал.
+        duration_minutes:
+          $ref: "#/components/schemas/DurationMinutes"
+        created_at:
+          type: string
+          format: date-time
+        bookings_count:
+          type: integer
+          description: "Сколько броней привязано к типу: нужно предупреждению об удалении."
+        has_available_slots:
+          type: boolean
+          description: Есть ли в 14-дневном окне хотя бы один свободный слот.
+        duration_locked:
+          type: boolean
+          description: "Заперта ли длительность: у типа есть предстоящие брони."
+    MeetingTypeUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Название, 1–100 символов после обрезки; `null` недопустим.
+        description:
+          anyOf:
+            - type: string
+            - type: "null"
+          maxLength: 1000
+          description: Описание до 1000 символов; `null` и пустая строка означают «без описания».
+        duration_minutes:
+          $ref: "#/components/schemas/DurationMinutes"
+          description: Длительность меняется только без предстоящих броней.
+    SessionLogin:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          minLength: 1
+          maxLength: 320
+          format: email
+          description: Почта, по которой владелец входит в сервис.
+    SessionRead:
+      type: object
+      required:
+        - email
+        - is_owner
+        - owner_name
+      properties:
+        email:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Почта смотрящего из cookie; `null`, если cookie нет.
+        is_owner:
+          type: boolean
+          description: Совпадает ли почта смотрящего с почтой владельца.
+        owner_name:
+          type: string
+          description: Имя владельца из настроек сервиса.
+    SlotRead:
+      type: object
+      required:
+        - start
+        - available
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Начало слота в UTC с суффиксом `Z`.
+        available:
+          type: boolean
+          description: "`false`, если слот пересекается с предстоящей бронью любого типа."
+    SlotsRead:
+      type: object
+      required:
+        - slots
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/SlotRead"
+          description: Все слоты фиксированного 14-дневного окна, включая занятые.
+servers:
+  - url: http://localhost:8000
+    description: Локальный сервер
+    variables: {}

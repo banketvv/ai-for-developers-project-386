@@ -20,6 +20,7 @@ description = "Установить зависимости backend и frontend"
 run = [
   { task = "backend:install" },
   { task = "frontend:install" },
+  { task = "api:install" },
 ]
 
 [tasks."backend:install"]
@@ -37,7 +38,26 @@ description = "Установка зависимостей по lock-файла�
 run = [
   { task = "backend:install" },
   { task = "frontend:ci" },
+  { task = "api:install" },
 ]
+
+[tasks."api:install"]
+description = "Установить зависимости TypeSpec-контракта"
+dir = "api"
+hide = true
+run = "npm ci"
+
+[tasks."api:generate"]
+description = "Пересобрать OpenAPI, TS-клиент и Pydantic-модели из TypeSpec"
+dir = "api"
+tags = ["contract"]
+run = "npm run generate"
+
+[tasks."api:check"]
+description = "Проверить, что артефакты контракта совпадают с TypeSpec"
+dir = "api"
+tags = ["contract"]
+run = "npm run check"
 
 [tasks."frontend:ci"]
 description = "npm ci по package-lock.json"
@@ -71,7 +91,7 @@ run = "npm run dev"
 
 [tasks.check]
 description = "Линтеры, типы, тесты и сборка"
-depends = ["backend:lint", "backend:test", "frontend:lint", "frontend:test", "frontend:build"]
+depends = ["api:check", "backend:lint", "backend:test", "frontend:lint", "frontend:test", "frontend:build"]
 
 [tasks."backend:lint"]
 description = "ruff + mypy для backend"

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Response
 
 from app.api.deps import NowDep, OwnerDep, SessionDep, SettingsDep
+from app.api.responses import error_responses
 from app.schemas.meeting_type import MeetingTypeCreate, MeetingTypeRead, MeetingTypeUpdate
 from app.services.meeting_types import create_meeting_type as create_meeting_type_service
 from app.services.meeting_types import delete_meeting_type as delete_meeting_type_service
@@ -21,7 +22,9 @@ async def read_meeting_types(
     return await list_meeting_types(session, now=now, timezone=settings.owner_timezone)
 
 
-@router.post("", response_model=MeetingTypeRead, status_code=201)
+@router.post(
+    "", response_model=MeetingTypeRead, status_code=201, responses=error_responses(403, 422)
+)
 async def create_meeting_type(
     payload: MeetingTypeCreate,
     session: SessionDep,
@@ -38,7 +41,9 @@ async def create_meeting_type(
     )
 
 
-@router.get("/{meeting_type_id}", response_model=MeetingTypeRead)
+@router.get(
+    "/{meeting_type_id}", response_model=MeetingTypeRead, responses=error_responses(404, 422)
+)
 async def read_meeting_type(
     meeting_type_id: int,
     session: SessionDep,
@@ -54,7 +59,11 @@ async def read_meeting_type(
     )
 
 
-@router.patch("/{meeting_type_id}", response_model=MeetingTypeRead)
+@router.patch(
+    "/{meeting_type_id}",
+    response_model=MeetingTypeRead,
+    responses=error_responses(403, 404, 409, 422),
+)
 async def update_meeting_type(
     meeting_type_id: int,
     payload: MeetingTypeUpdate,
@@ -73,7 +82,7 @@ async def update_meeting_type(
     )
 
 
-@router.delete("/{meeting_type_id}", status_code=204)
+@router.delete("/{meeting_type_id}", status_code=204, responses=error_responses(403, 404, 422))
 async def delete_meeting_type(
     meeting_type_id: int,
     session: SessionDep,

@@ -7,9 +7,18 @@
 Учебный проект Хекслета: https://ru.hexlet.io/programs/ai-for-developers
 Как это должно работать: https://files.hexlet.app/a/2ipc5m
 
+## Демо
+
+Приложение задеплоено: https://call-scheduler-hexlet.onrender.com
+
+Бесплатный инстанс Render засыпает без трафика, поэтому первый запрос после паузы может занять до минуты.
+
 ## Стек
 
-- Разное
+- **Backend:** Python 3.13, FastAPI, SQLAlchemy 2 (async), SQLite, Alembic
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui
+- **Контракт:** TypeSpec → OpenAPI → TypeScript- и Pydantic-модели
+- **Инструменты:** mise, uv, Docker, Playwright
 
 ## Установка
 
@@ -18,11 +27,28 @@
 ```bash
 git clone https://github.com/banketvv/ai-for-developers-project-386.git
 cd ai-for-developers-project-386
+mise trust && mise install
+mise run setup
 ```
 
 ## Использование
 
-<!-- Добавьте примеры запуска и запись asciinema — именно это смотрит работодатель -->
+```bash
+mise run dev
+```
+
+Бэкенд поднимется на `http://localhost:8000`, фронтенд — на `http://localhost:5173`.
+
+### Docker
+
+Образ собирается из `Dockerfile` в корне репозитория. Внутри фронтенд собирается Vite, а FastAPI отдаёт и статику, и API с одного origin.
+
+```bash
+docker build -t call-scheduler .
+docker run --rm -p 8000:8000 -e PORT=8000 call-scheduler
+```
+
+Приложение откроется на `http://localhost:8000`. Порт задаётся переменной окружения `PORT`, миграции Alembic применяются при старте контейнера.
 
 ---
 

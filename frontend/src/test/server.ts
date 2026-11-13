@@ -29,6 +29,7 @@ const defaultHandlers = [
     }),
   ),
   http.get(meetingTypesUrl, () => HttpResponse.json([])),
+  http.get(bookingsUrl, () => HttpResponse.json([])),
 ]
 
 export const server = setupServer(...defaultHandlers)

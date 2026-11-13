@@ -1,3 +1,0 @@
-# Хуки и скрипты должны иметь LF в рабочей копии: CRLF ломает git-хуки в bash.
-.githooks/** text eol=lf
-scripts/** text eol=lf

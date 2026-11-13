@@ -43,7 +43,9 @@ def _validation_fields(errors: Sequence[Any]) -> dict[str, str]:
             str(part) for part in error.get("loc", ()) if part not in ("body", "query", "path")
         ]
         if location:
-            fields[".".join(location)] = str(error.get("msg", ""))
+            message = str(error.get("msg", ""))
+            # Pydantic добавляет служебный префикс: клиенту показывается только текст.
+            fields[".".join(location)] = message.removeprefix("Value error, ")
     return fields
 
 

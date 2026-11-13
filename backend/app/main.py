@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.routes.bookings import router as bookings_router
 from app.api.v1.routes.health import router as health_router
 from app.api.v1.routes.meeting_types import router as meeting_types_router
 from app.api.v1.routes.session import router as session_router
@@ -40,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(session_router)
     app.include_router(meeting_types_router)
     app.include_router(slots_router)
+    app.include_router(bookings_router)
     install_error_handlers(app)
 
     return app

@@ -30,12 +30,6 @@ function monthOrdinal({ year, monthIndex }: MonthCursor): number {
   return year * 12 + monthIndex
 }
 
-function nextMonth({ year, monthIndex }: MonthCursor): MonthCursor {
-  return monthIndex === 11
-    ? { year: year + 1, monthIndex: 0 }
-    : { year, monthIndex: monthIndex + 1 }
-}
-
 function MeetingTypeCalendarPage() {
   const params = useParams()
   const meetingTypeId = Number(params.meetingTypeId)
@@ -79,35 +73,44 @@ function MeetingTypeCalendarPage() {
       ),
     [days],
   )
-  const currentDay =
-    selectedDay && activeDays.has(selectedDay)
-      ? selectedDay
-      : (days.find((day) => day.hasAvailable)?.key ?? null)
+  const firstActiveDay = days.find((day) => day.hasAvailable) ?? null
   const firstMonth = days.length > 0 ? monthOf(days[0].key) : null
-  const lastMonth =
-    days.length > 0 ? monthOf(days[days.length - 1].key) : null
-  const shownMonth = monthCursor ?? firstMonth
-  const canGoNext =
-    shownMonth !== null &&
-    lastMonth !== null &&
-    monthOrdinal(shownMonth) < monthOrdinal(lastMonth)
+  // Первый экран — месяц первого свободного дня: сетка и список слотов совпадают.
+  const shownMonth =
+    monthCursor ?? (firstActiveDay ? monthOf(firstActiveDay.key) : firstMonth)
+  const shownOrdinal = shownMonth === null ? null : monthOrdinal(shownMonth)
+  const firstActiveDayInShownMonth =
+    shownOrdinal === null
+      ? null
+      : (days.find(
+          (day) =>
+            day.hasAvailable && monthOrdinal(monthOf(day.key)) === shownOrdinal,
+        )?.key ?? null)
+  // Выбранный день всегда из показанного месяца: иначе сетка и слоты разойдутся.
+  const currentDay =
+    selectedDay !== null &&
+    activeDays.has(selectedDay) &&
+    shownOrdinal !== null &&
+    monthOrdinal(monthOf(selectedDay)) === shownOrdinal
+      ? selectedDay
+      : firstActiveDayInShownMonth
+  const nextActiveDay =
+    shownOrdinal === null
+      ? null
+      : (days.find(
+          (day) =>
+            day.hasAvailable && monthOrdinal(monthOf(day.key)) > shownOrdinal,
+        ) ?? null)
+  const canGoNext = nextActiveDay !== null
   const daySlots = days.find((day) => day.key === currentDay)?.slots ?? []
 
   function showNextMonth() {
-    if (shownMonth === null) {
+    if (nextActiveDay === null) {
       return
     }
-    const target = nextMonth(shownMonth)
-    setMonthCursor(target)
-    // Листаем вперёд к слотам этого месяца, а не оставляем выбор в прошлом.
-    const firstInTarget = days.find(
-      (day) =>
-        day.hasAvailable &&
-        monthOrdinal(monthOf(day.key)) === monthOrdinal(target),
-    )
-    if (firstInTarget) {
-      setSelectedDay(firstInTarget.key)
-    }
+    // Листаем к месяцу со свободным днём и сразу выбираем этот день.
+    setMonthCursor(monthOf(nextActiveDay.key))
+    setSelectedDay(nextActiveDay.key)
   }
 
   if (status === 'loading') {

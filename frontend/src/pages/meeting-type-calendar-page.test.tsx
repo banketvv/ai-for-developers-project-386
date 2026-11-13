@@ -221,6 +221,25 @@ describe('MeetingTypeCalendarPage', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
+  it('не листает в месяц, где все дни заняты', async () => {
+    serve(MEETING_TYPE, [
+      slot('2026-11-30T06:00:00Z'),
+      slot('2026-12-01T06:00:00Z', false),
+      slot('2026-12-02T06:00:00Z', false),
+    ])
+
+    renderCalendar()
+
+    expect(await screen.findByText('Ноябрь 2026 г.')).toBeInTheDocument()
+    // Декабрь попадает в окно, но свободных дней в нём нет: листать некуда.
+    expect(
+      screen.getByRole('button', { name: 'Следующий месяц' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'понедельник, 30 ноября' }),
+    ).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('листает только вперёд: назад листать некуда', async () => {
     const user = userEvent.setup()
     serve(MEETING_TYPE, [

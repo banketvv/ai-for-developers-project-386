@@ -9,9 +9,6 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.db.models.booking import Booking
 
-# Допустимые длительности типа встречи: ограничены и в схеме запроса, и в БД.
-ALLOWED_DURATIONS = (15, 30, 45, 60)
-
 
 class MeetingType(Base):
     """Тип встречи: серия встреч с названием, описанием и длительностью."""

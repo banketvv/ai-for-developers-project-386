@@ -135,6 +135,30 @@ def test_invalid_meeting_type_is_rejected_at_its_field(
     assert client.get("/api/v1/meeting-types").json() == []
 
 
+def test_duration_locked_in_the_list_counts_only_upcoming_bookings(
+    client: TestClient, settings: Settings, db: Session, now: datetime
+) -> None:
+    locked_type = create_meeting_type(client, settings, title="Занятая", duration_minutes=30)
+    create_meeting_type(client, settings, title="Свободная", duration_minutes=30)
+    db.add(
+        Booking(
+            meeting_type_id=locked_type["id"],
+            guest_name="Гость",
+            guest_email="guest@example.com",
+            # Вторник 17 ноября, 10:00 по Москве: бронь ещё предстоит.
+            start=datetime(2026, 11, 17, 7, 0),
+            created_at=now,
+        )
+    )
+    db.commit()
+
+    listed = {item["title"]: item for item in client.get("/api/v1/meeting-types").json()}
+
+    assert listed["Занятая"]["bookings_count"] == 1
+    assert listed["Занятая"]["duration_locked"] is True
+    assert listed["Свободная"]["duration_locked"] is False
+
+
 def test_type_with_every_slot_taken_is_marked_without_free_slots(
     client: TestClient, settings: Settings, db: Session, now: datetime
 ) -> None:

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/banketvv/ai-for-developers-project-386/compare/v0.3.0...v0.4.0) (2026-11-14)
+
+
+### Features
+
+* include e2e in checks and fix home copy ([#33](https://github.com/banketvv/ai-for-developers-project-386/issues/33)) ([#34](https://github.com/banketvv/ai-for-developers-project-386/issues/34)) ([ce806b3](https://github.com/banketvv/ai-for-developers-project-386/commit/ce806b3affe3a60d979cb5ade684a3fe1dfb7492))
+
 ## [0.3.0](https://github.com/banketvv/ai-for-developers-project-386/compare/v0.2.0...v0.3.0) (2026-11-14)
 
 

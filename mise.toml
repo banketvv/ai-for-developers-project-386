@@ -91,7 +91,19 @@ run = "npm run dev"
 
 [tasks.check]
 description = "Линтеры, типы, тесты и сборка"
-depends = ["api:check", "backend:lint", "backend:test", "frontend:lint", "frontend:test", "frontend:build"]
+depends = [
+  "api:check",
+  "sdk:check",
+  "backend:lint",
+  "backend:test",
+  "frontend:lint",
+  "frontend:test",
+  "frontend:build",
+]
+
+[tasks."sdk:check"]
+description = "Проверить, что фронтенд ходит через сгенерированный SDK"
+run = "python scripts/check_sdk.py"
 
 [tasks."backend:lint"]
 description = "ruff + mypy для backend"

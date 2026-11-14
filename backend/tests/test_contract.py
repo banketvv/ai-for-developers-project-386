@@ -54,6 +54,15 @@ def test_contract_is_a_valid_openapi_document() -> None:
     validate(load_contract())
 
 
+def test_slots_operation_documents_the_booking_window() -> None:
+    contract = load_contract()
+    operation = contract["paths"]["/api/v1/meeting-types/{meeting_type_id}/slots"]["get"]
+    description = operation["description"]
+
+    for fragment in ("14", "13 дней", "09:00", "18:00", "Europe/Moscow", "duration_minutes"):
+        assert fragment in description
+
+
 def test_every_contract_operation_is_served_with_the_same_statuses(app: FastAPI) -> None:
     contract = load_contract()
     served = app.openapi()

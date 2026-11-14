@@ -138,7 +138,12 @@ class SessionRead(ContractModel):
 
 
 class SlotRead(ContractModel):
-    start: Annotated[datetime, Field(description="Начало слота в UTC с суффиксом `Z`.")]
+    start: Annotated[
+        datetime,
+        Field(
+            description="Начало слота в UTC с суффиксом `Z`. Длительность слота равна\n`duration_minutes` типа встречи, для которого запрошена сетка."
+        ),
+    ]
     available: Annotated[
         bool,
         Field(description="`false`, если слот пересекается с предстоящей бронью любого типа."),
@@ -146,10 +151,7 @@ class SlotRead(ContractModel):
 
 
 class SlotsRead(ContractModel):
-    slots: Annotated[
-        list[SlotRead],
-        Field(description="Все слоты фиксированного 14-дневного окна, включая занятые."),
-    ]
+    slots: list[SlotRead]
 
 
 class BookingMeetingTypeRead(ContractModel):

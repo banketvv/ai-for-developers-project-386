@@ -33,6 +33,10 @@ describe('OwnerPage', () => {
       screen.getByRole('heading', { level: 1, name: 'Вход владельца' }),
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Email владельца')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Для тестирования используйте почту/),
+    ).toBeInTheDocument()
+    expect(screen.getByText('owner@example.com')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument()
   })
 

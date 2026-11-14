@@ -82,6 +82,10 @@ function OwnerPage() {
             Введите email, указанный в настройках сервиса: он опознаёт вас как
             владельца на этом устройстве.
           </p>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+            Для тестирования используйте почту{' '}
+            <span className="font-medium text-foreground">owner@example.com</span>.
+          </p>
           <form className="mt-8 max-w-sm space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="owner-email">Email владельца</Label>

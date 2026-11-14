@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/banketvv/ai-for-developers-project-386/compare/v0.2.0...v0.3.0) (2026-11-14)
+
+
+### Features
+
+* hint the test owner email on the login page ([#15](https://github.com/banketvv/ai-for-developers-project-386/issues/15)) ([0d66469](https://github.com/banketvv/ai-for-developers-project-386/commit/0d6646981f94b38129aed6d0b654ad00f48355e0))
+
+
+### Documentation
+
+* **api:** document the booking window in TypeSpec ([#14](https://github.com/banketvv/ai-for-developers-project-386/issues/14)) ([cf4155b](https://github.com/banketvv/ai-for-developers-project-386/commit/cf4155b8026be4fd4ed777b144b4f1840ffd8b00))
+
 ## [0.2.0](https://github.com/banketvv/ai-for-developers-project-386/compare/v0.1.0...v0.2.0) (2026-11-13)
 
 

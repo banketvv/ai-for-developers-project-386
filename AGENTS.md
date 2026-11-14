@@ -19,7 +19,7 @@ mise trust && mise install   # fresh clone only
 mise run setup               # uv sync + npm install (local, includes api/)
 mise run setup:ci            # uv sync + npm ci (lockfile-strict)
 mise run dev                 # backend :8000 + frontend :5173 together
-mise run check               # contract + backend lint/test + frontend lint/build
+mise run check               # contract + backend lint/test + frontend lint/test/build + Playwright
 mise run api:generate        # TypeSpec → OpenAPI → TS-типы и Pydantic-модели
 mise run api:check           # упасть, если артефакты контракта устарели
 mise run e2e                 # браузерные E2E-тесты Playwright (поднимает оба сервера)
@@ -31,10 +31,10 @@ mise tasks ls
 - Backend only: `mise run backend:dev`, `backend:migrate`, `backend:lint`, `backend:test`.
 - Frontend only: `mise run frontend:dev`, `frontend:lint`, `frontend:test`, `frontend:build`.
 - Frontend tests in watch mode: `mise run frontend:test:watch`.
-- Browser tests: `mise run e2e` runs Playwright in Chromium against the real FastAPI and Vite. They start their own servers on `127.0.0.1:8001`/`:5174` with a throwaway `backend/e2e.db` and a fixed clock (`FAKE_NOW`), and are **not** part of `mise run check` (they need a browser). Specs live in `frontend/e2e/**/*.e2e.ts` — the `.e2e.ts` suffix keeps Vitest away from them.
+- Browser tests: `mise run check` includes `mise run e2e`, which runs Playwright in Chromium against the real FastAPI and Vite. They start their own servers on `127.0.0.1:8001`/`:5174` with a throwaway `backend/e2e.db` and a fixed clock (`FAKE_NOW`). Install Chromium once with `mise run e2e:install`; use `mise run e2e` to run only the browser tests. Specs live in `frontend/e2e/**/*.e2e.ts` — the `.e2e.ts` suffix keeps Vitest away from them.
 - Single backend test: `cd backend && uv run pytest tests/test_health.py -k health`.
 - Frontend tests are Vitest + Testing Library on jsdom, colocated as `*.test.tsx`. `npm run lint` is **oxlint**, not ESLint. `npm run build` (`tsc -b && vite build`) is the only TypeScript typecheck — run it after TS changes.
-- `mise run check` runs its six tasks in parallel; one failure does not stop the others, but the run exits non-zero.
+- `mise run check` runs its seven tasks in parallel; one failure does not stop the others, but the run exits non-zero.
 - `api:check` regenerates the contract artifacts and fails when they differ from git — run `mise run api:generate` and commit the result after any `.tsp` change.
 
 ## Non-obvious constraints

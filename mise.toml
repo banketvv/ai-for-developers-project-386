@@ -90,8 +90,16 @@ run = "npm run dev"
 # --- Проверки ---
 
 [tasks.check]
-description = "Линтеры, типы, тесты и сборка"
-depends = ["api:check", "backend:lint", "backend:test", "frontend:lint", "frontend:test", "frontend:build"]
+description = "Линтеры, типы, тесты, сборка и браузерные тесты"
+depends = [
+  "api:check",
+  "backend:lint",
+  "backend:test",
+  "frontend:lint",
+  "frontend:test",
+  "frontend:build",
+  "e2e",
+]
 
 [tasks."backend:lint"]
 description = "ruff + mypy для backend"

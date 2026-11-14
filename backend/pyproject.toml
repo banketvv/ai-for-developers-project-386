@@ -26,10 +26,8 @@ dev = [
     "mypy>=1.14",
     "datamodel-code-generator>=0.95.0",
     "pyyaml>=6.0.3",
-    "jsonschema>=4.18",
     "openapi-spec-validator>=0.9.0",
     "types-pyyaml>=6.0.12.20261113",
-    "types-jsonschema>=4.26.0.20261006",
 ]
 
 [build-system]

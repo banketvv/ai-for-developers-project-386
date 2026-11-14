@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/banketvv/ai-for-developers-project-386/compare/v0.1.0...v0.2.0) (2026-11-13)
+
+
+### Features
+
+* add cross-platform agent guardrails ([#29](https://github.com/banketvv/ai-for-developers-project-386/issues/29)) ([854a2ca](https://github.com/banketvv/ai-for-developers-project-386/commit/854a2ca786becb6b5962550dc65abbeecd47f2f3))
+
 ## 0.1.0 (2026-11-13)
 
 
